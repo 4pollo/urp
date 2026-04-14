@@ -1,8 +1,13 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { PrismaModule } from './prisma.module';
+import { User } from './users/entities/user.entity';
+import { UserRole } from './users/entities/user-role.entity';
+import { Role } from './roles/entities/role.entity';
+import { RolePermission } from './roles/entities/role-permission.entity';
+import { Permission } from './permissions/entities/permission.entity';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { RolesModule } from './roles/roles.module';
@@ -13,7 +18,20 @@ import { PermissionsModule } from './permissions/permissions.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    PrismaModule,
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        type: 'mysql',
+        host: configService.get('DB_HOST', 'localhost'),
+        port: configService.get('DB_PORT', 3306),
+        username: configService.get('DB_USERNAME'),
+        password: configService.get('DB_PASSWORD'),
+        database: configService.get('DB_DATABASE'),
+        entities: [User, UserRole, Role, RolePermission, Permission],
+        synchronize: process.env.NODE_ENV !== 'production',
+      }),
+      inject: [ConfigService],
+    }),
     AuthModule,
     UsersModule,
     RolesModule,

@@ -1,28 +1,38 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Permission } from './entities/permission.entity';
+import { UserRole } from '../users/entities/user-role.entity';
+import { Role } from '../roles/entities/role.entity';
+import { RolePermission } from '../roles/entities/role-permission.entity';
 import { CreatePermissionDto } from './dto/create-permission.dto';
 import { UpdatePermissionDto } from './dto/update-permission.dto';
 
 @Injectable()
 export class PermissionsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    @InjectRepository(Permission) private permissionRepo: Repository<Permission>,
+    @InjectRepository(UserRole) private userRoleRepo: Repository<UserRole>,
+    @InjectRepository(Role) private roleRepo: Repository<Role>,
+    @InjectRepository(RolePermission) private rolePermissionRepo: Repository<RolePermission>,
+  ) {}
 
   async findAll(group?: string) {
     const where = group ? { group } : {};
 
-    const permissions = await this.prisma.permission.findMany({
+    const permissions = await this.permissionRepo.find({
       where,
-      orderBy: [
-        { group: 'asc' },
-        { key: 'asc' },
-      ],
+      order: {
+        group: 'ASC',
+        key: 'ASC',
+      },
     });
 
     return permissions;
   }
 
   async findOne(id: number) {
-    const permission = await this.prisma.permission.findUnique({
+    const permission = await this.permissionRepo.findOne({
       where: { id },
     });
 
@@ -36,8 +46,7 @@ export class PermissionsService {
   async create(createPermissionDto: CreatePermissionDto) {
     const { key, group, description } = createPermissionDto;
 
-    // 检查权限 key 是否已存在
-    const existingPermission = await this.prisma.permission.findUnique({
+    const existingPermission = await this.permissionRepo.findOne({
       where: { key },
     });
 
@@ -45,27 +54,25 @@ export class PermissionsService {
       throw new ConflictException('Permission key already exists');
     }
 
-    const permission = await this.prisma.permission.create({
-      data: {
-        key,
-        group,
-        description,
-      },
+    const permission = this.permissionRepo.create({
+      key,
+      group,
+      description,
     });
+    await this.permissionRepo.save(permission);
 
     return permission;
   }
 
   async update(id: number, updatePermissionDto: UpdatePermissionDto) {
-    const permission = await this.prisma.permission.findUnique({ where: { id } });
+    const permission = await this.permissionRepo.findOne({ where: { id } });
 
     if (!permission) {
       throw new NotFoundException('Permission not found');
     }
 
-    // 如果更新 key，检查是否已存在
     if (updatePermissionDto.key && updatePermissionDto.key !== permission.key) {
-      const existingPermission = await this.prisma.permission.findUnique({
+      const existingPermission = await this.permissionRepo.findOne({
         where: { key: updatePermissionDto.key },
       });
       if (existingPermission) {
@@ -73,44 +80,38 @@ export class PermissionsService {
       }
     }
 
-    const updatedPermission = await this.prisma.permission.update({
-      where: { id },
-      data: updatePermissionDto,
-    });
+    await this.permissionRepo.update(id, updatePermissionDto);
 
-    return updatedPermission;
+    return {
+      ...permission,
+      ...updatePermissionDto,
+    };
   }
 
   async remove(id: number) {
-    const permission = await this.prisma.permission.findUnique({ where: { id } });
+    const permission = await this.permissionRepo.findOne({ where: { id } });
 
     if (!permission) {
       throw new NotFoundException('Permission not found');
     }
 
-    await this.prisma.permission.delete({ where: { id } });
+    await this.permissionRepo.delete(id);
 
     return { message: 'Permission deleted successfully' };
   }
 
   async checkPermission(userId: number, permissionKey: string) {
-    // 获取用户的所有角色
-    const userRoles = await this.prisma.userRole.findMany({
+    const userRoles = await this.userRoleRepo.find({
       where: { userId },
-      include: {
+      relations: {
         role: {
-          include: {
-            permissions: {
-              include: {
-                permission: true,
-              },
-            },
+          permissions: {
+            permission: true,
           },
         },
       },
     });
 
-    // 收集所有权限
     const permissions = new Set<string>();
     for (const userRole of userRoles) {
       for (const rolePermission of userRole.role.permissions) {
@@ -124,23 +125,17 @@ export class PermissionsService {
   }
 
   async getUserPermissions(userId: number) {
-    // 获取用户的所有角色
-    const userRoles = await this.prisma.userRole.findMany({
+    const userRoles = await this.userRoleRepo.find({
       where: { userId },
-      include: {
+      relations: {
         role: {
-          include: {
-            permissions: {
-              include: {
-                permission: true,
-              },
-            },
+          permissions: {
+            permission: true,
           },
         },
       },
     });
 
-    // 收集所有权限和角色
     const permissions = new Set<string>();
     const roles = new Set<string>();
 

@@ -1,24 +1,30 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Role } from './entities/role.entity';
+import { RolePermission } from './entities/role-permission.entity';
+import { Permission } from '../permissions/entities/permission.entity';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { AssignPermissionsDto } from './dto/assign-permissions.dto';
 
 @Injectable()
 export class RolesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    @InjectRepository(Role) private roleRepo: Repository<Role>,
+    @InjectRepository(RolePermission) private rolePermissionRepo: Repository<RolePermission>,
+    @InjectRepository(Permission) private permissionRepo: Repository<Permission>,
+  ) {}
 
   async findAll() {
-    const roles = await this.prisma.role.findMany({
-      include: {
+    const roles = await this.roleRepo.find({
+      relations: {
         permissions: {
-          include: {
-            permission: true,
-          },
+          permission: true,
         },
       },
-      orderBy: {
-        createdAt: 'desc',
+      order: {
+        createdAt: 'DESC',
       },
     });
 
@@ -32,13 +38,11 @@ export class RolesService {
   }
 
   async findOne(id: number) {
-    const role = await this.prisma.role.findUnique({
+    const role = await this.roleRepo.findOne({
       where: { id },
-      include: {
+      relations: {
         permissions: {
-          include: {
-            permission: true,
-          },
+          permission: true,
         },
         users: true,
       },
@@ -67,8 +71,7 @@ export class RolesService {
   async create(createRoleDto: CreateRoleDto) {
     const { name, description } = createRoleDto;
 
-    // 检查角色名是否已存在
-    const existingRole = await this.prisma.role.findUnique({
+    const existingRole = await this.roleRepo.findOne({
       where: { name },
     });
 
@@ -76,12 +79,11 @@ export class RolesService {
       throw new ConflictException('Role name already exists');
     }
 
-    const role = await this.prisma.role.create({
-      data: {
-        name,
-        description,
-      },
+    const role = this.roleRepo.create({
+      name,
+      description,
     });
+    await this.roleRepo.save(role);
 
     return {
       id: role.id,
@@ -91,15 +93,14 @@ export class RolesService {
   }
 
   async update(id: number, updateRoleDto: UpdateRoleDto) {
-    const role = await this.prisma.role.findUnique({ where: { id } });
+    const role = await this.roleRepo.findOne({ where: { id } });
 
     if (!role) {
       throw new NotFoundException('Role not found');
     }
 
-    // 如果更新名称，检查是否已存在
     if (updateRoleDto.name && updateRoleDto.name !== role.name) {
-      const existingRole = await this.prisma.role.findUnique({
+      const existingRole = await this.roleRepo.findOne({
         where: { name: updateRoleDto.name },
       });
       if (existingRole) {
@@ -107,53 +108,42 @@ export class RolesService {
       }
     }
 
-    const updatedRole = await this.prisma.role.update({
-      where: { id },
-      data: updateRoleDto,
-    });
+    await this.roleRepo.update(id, updateRoleDto);
 
     return {
-      id: updatedRole.id,
-      name: updatedRole.name,
-      description: updatedRole.description,
+      id,
+      name: updateRoleDto.name || role.name,
+      description: updateRoleDto.description ?? role.description,
     };
   }
 
   async remove(id: number) {
-    const role = await this.prisma.role.findUnique({ where: { id } });
+    const role = await this.roleRepo.findOne({ where: { id } });
 
     if (!role) {
       throw new NotFoundException('Role not found');
     }
 
-    await this.prisma.role.delete({ where: { id } });
+    await this.roleRepo.delete(id);
 
     return { message: 'Role deleted successfully' };
   }
 
   async assignPermissions(id: number, assignPermissionsDto: AssignPermissionsDto) {
-    const role = await this.prisma.role.findUnique({ where: { id } });
+    const role = await this.roleRepo.findOne({ where: { id } });
 
     if (!role) {
       throw new NotFoundException('Role not found');
     }
 
-    // 删除现有权限
-    await this.prisma.rolePermission.deleteMany({
-      where: { roleId: id },
-    });
+    await this.rolePermissionRepo.delete({ roleId: id });
 
-    // 分配新权限
-    await Promise.all(
-      assignPermissionsDto.permissionIds.map((permissionId) =>
-        this.prisma.rolePermission.create({
-          data: {
-            roleId: id,
-            permissionId,
-          },
-        }),
-      ),
-    );
+    for (const permissionId of assignPermissionsDto.permissionIds) {
+      await this.rolePermissionRepo.save({
+        roleId: id,
+        permissionId,
+      });
+    }
 
     return { message: 'Permissions assigned successfully' };
   }
