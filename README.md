@@ -149,7 +149,7 @@ npm run start:prod
 ```json
 {
   "code": 0,
-  "data": { "items": [], "total": 100, "page": 1, "pageSize": 10 }
+  "data": { "items": [], "total": 100, "page": 1, "limit": 10 }
 }
 ```
 

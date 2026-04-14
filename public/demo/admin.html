@@ -452,7 +452,7 @@
 
         async function loadUsers() {
             try {
-                const response = await fetch('http://localhost:3000/api/users?page=1&pageSize=100', {
+                const response = await fetch('http://localhost:3000/api/users?page=1&limit=100', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 

@@ -196,7 +196,7 @@ URP 核心表和逻辑无需修改，只需扩展权限数据即可。
 
 分页:
 ```json
-{ "code": 0, "data": { "items": [], "total": 100, "page": 1, "pageSize": 10 } }
+{ "code": 0, "data": { "items": [], "total": 100, "page": 1, "limit": 10 } }
 ```
 
 ---

@@ -14,7 +14,7 @@
 
 ### 分页响应
 ```json
-{ "code": 0, "data": { "items": [], "total": 100, "page": 1, "pageSize": 10 } }
+{ "code": 0, "data": { "items": [], "total": 100, "page": 1, "limit": 10 } }
 ```
 
 ### 常用状态码
@@ -128,7 +128,7 @@
 
 ### 2.1 用户列表 `GET /api/users`
 
-**参数**: `?page=1&pageSize=10&status=active&roleId=1`
+**参数**: `?page=1&limit=10&status=active&roleId=1`
 
 **响应**:
 ```json
@@ -140,7 +140,7 @@
     ],
     "total": 100,
     "page": 1,
-    "pageSize": 10
+    "limit": 10
   }
 }
 ```

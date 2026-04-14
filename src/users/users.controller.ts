@@ -26,13 +26,13 @@ export class UsersController {
   @Get()
   async findAll(
     @Query('page') page?: string,
-    @Query('pageSize') pageSize?: string,
+    @Query('limit') limit?: string,
     @Query('status') status?: string,
     @Query('roleId') roleId?: string,
   ) {
     return this.usersService.findAll(
       page ? parseInt(page) : 1,
-      pageSize ? parseInt(pageSize) : 10,
+      limit ? parseInt(limit) : 10,
       status,
       roleId ? parseInt(roleId) : undefined,
     );

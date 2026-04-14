@@ -10,8 +10,8 @@ import { AssignRolesDto } from './dto/assign-roles.dto';
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(page: number = 1, pageSize: number = 10, status?: string, roleId?: number) {
-    const skip = (page - 1) * pageSize;
+  async findAll(page: number = 1, limit: number = 10, status?: string, roleId?: number) {
+    const skip = (page - 1) * limit;
     const where: any = {};
 
     if (status) {
@@ -30,7 +30,7 @@ export class UsersService {
       this.prisma.user.findMany({
         where,
         skip,
-        take: pageSize,
+        take: limit,
         include: {
           roles: {
             include: {
@@ -59,7 +59,7 @@ export class UsersService {
       })),
       total,
       page,
-      pageSize,
+      limit,
     };
   }
 
