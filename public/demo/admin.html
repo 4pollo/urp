@@ -7,8 +7,23 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;600&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --color-bg-primary: #0a0a0a;
+            --color-bg-secondary: #141414;
+            --color-bg-tertiary: #1f1f1f;
+            --color-surface: #2a2a2a;
+            --color-border: #333333;
+            --color-border-light: #404040;
+            --color-text-primary: #ffffff;
+            --color-text-secondary: #a3a3a3;
+            --color-text-tertiary: #737373;
+            --color-accent: #ffffff;
+            --color-accent-hover: #e5e5e5;
+            --spacing-unit: 8px;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -16,76 +31,95 @@
         }
 
         body {
-            font-family: 'DM Sans', sans-serif;
-            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+            font-family: 'IBM Plex Mono', monospace;
+            background: var(--color-bg-primary);
             min-height: 100vh;
-            color: #e8e8e8;
+            color: var(--color-text-primary);
         }
 
         .header {
-            background: rgba(26, 26, 26, 0.8);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 20px 0;
+            background: var(--color-bg-secondary);
+            border-bottom: 1px solid var(--color-border);
+            padding: calc(var(--spacing-unit) * 3) 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
         .header-content {
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 0 auto;
-            padding: 0 24px;
+            padding: 0 calc(var(--spacing-unit) * 4);
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
         .logo {
-            font-family: 'Crimson Pro', serif;
+            font-family: 'Syne', sans-serif;
             font-size: 24px;
-            font-weight: 600;
-            background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--color-text-primary);
+            text-transform: uppercase;
         }
 
         .nav {
             display: flex;
-            gap: 24px;
+            gap: calc(var(--spacing-unit) * 4);
             align-items: center;
         }
 
         .nav a {
-            color: #888;
+            color: var(--color-text-tertiary);
             text-decoration: none;
-            font-size: 14px;
+            font-size: 11px;
             font-weight: 500;
             transition: color 0.2s ease;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            position: relative;
         }
 
         .nav a:hover, .nav a.active {
-            color: #a78bfa;
+            color: var(--color-text-primary);
+        }
+
+        .nav a.active::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--color-text-primary);
         }
 
         .logout-btn {
-            padding: 8px 16px;
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            border-radius: 6px;
-            color: #fca5a5;
-            font-size: 14px;
+            padding: calc(var(--spacing-unit) * 1) calc(var(--spacing-unit) * 2);
+            background: transparent;
+            border: 1px solid var(--color-border);
+            border-radius: 1px;
+            color: var(--color-text-secondary);
+            font-size: 11px;
             cursor: pointer;
             transition: all 0.2s ease;
+            font-family: 'IBM Plex Mono', monospace;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
         }
 
         .logout-btn:hover {
-            background: rgba(239, 68, 68, 0.2);
+            background: var(--color-bg-tertiary);
+            border-color: var(--color-border-light);
+            color: var(--color-text-primary);
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 0 auto;
-            padding: 48px 24px;
-            animation: fadeIn 0.6s ease-out;
+            padding: calc(var(--spacing-unit) * 8) calc(var(--spacing-unit) * 4);
+            animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         @keyframes fadeIn {
@@ -94,46 +128,51 @@
         }
 
         .page-title {
-            font-family: 'Crimson Pro', serif;
-            font-size: 36px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            letter-spacing: -0.02em;
+            font-family: 'Syne', sans-serif;
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: calc(var(--spacing-unit) * 1);
+            letter-spacing: -0.03em;
+            text-transform: uppercase;
         }
 
         .page-subtitle {
-            font-size: 16px;
-            color: #888;
-            margin-bottom: 40px;
+            font-size: 12px;
+            color: var(--color-text-tertiary);
+            margin-bottom: calc(var(--spacing-unit) * 6);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
         }
 
         .tabs {
             display: flex;
-            gap: 8px;
-            margin-bottom: 32px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            gap: calc(var(--spacing-unit) * 1);
+            margin-bottom: calc(var(--spacing-unit) * 4);
+            border-bottom: 1px solid var(--color-border);
         }
 
         .tab {
-            padding: 12px 24px;
+            padding: calc(var(--spacing-unit) * 2) calc(var(--spacing-unit) * 3);
             background: transparent;
             border: none;
-            color: #888;
-            font-size: 15px;
-            font-weight: 500;
+            color: var(--color-text-tertiary);
+            font-size: 11px;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
             border-bottom: 2px solid transparent;
-            font-family: 'DM Sans', sans-serif;
+            font-family: 'IBM Plex Mono', monospace;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
         }
 
         .tab:hover {
-            color: #a78bfa;
+            color: var(--color-text-primary);
         }
 
         .tab.active {
-            color: #a78bfa;
-            border-bottom-color: #8b5cf6;
+            color: var(--color-text-primary);
+            border-bottom-color: var(--color-text-primary);
         }
 
         .tab-content {
@@ -145,12 +184,22 @@
         }
 
         .card {
-            background: rgba(26, 26, 26, 0.8);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
-            padding: 32px;
-            margin-bottom: 24px;
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: 2px;
+            padding: calc(var(--spacing-unit) * 4);
+            margin-bottom: calc(var(--spacing-unit) * 3);
+            position: relative;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
         }
 
         .table-container {
@@ -164,20 +213,20 @@
 
         th {
             text-align: left;
-            padding: 16px;
-            font-size: 13px;
+            padding: calc(var(--spacing-unit) * 2);
+            font-size: 10px;
             font-weight: 600;
-            color: #888;
+            color: var(--color-text-tertiary);
             text-transform: uppercase;
-            letter-spacing: 0.05em;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            letter-spacing: 0.1em;
+            border-bottom: 1px solid var(--color-border);
         }
 
         td {
-            padding: 16px;
-            font-size: 14px;
-            color: #e8e8e8;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding: calc(var(--spacing-unit) * 2);
+            font-size: 12px;
+            color: var(--color-text-primary);
+            border-bottom: 1px solid var(--color-border);
         }
 
         tr:last-child td {
@@ -185,110 +234,149 @@
         }
 
         tr:hover {
-            background: rgba(255, 255, 255, 0.02);
+            background: var(--color-bg-tertiary);
         }
 
         .badge {
             display: inline-block;
-            padding: 4px 12px;
-            background: rgba(139, 92, 246, 0.15);
-            border: 1px solid rgba(139, 92, 246, 0.3);
-            border-radius: 12px;
-            color: #a78bfa;
-            font-size: 12px;
-            font-weight: 500;
+            padding: calc(var(--spacing-unit) * 0.5) calc(var(--spacing-unit) * 1.5);
+            background: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border);
+            border-radius: 1px;
+            color: var(--color-text-primary);
+            font-size: 10px;
+            font-weight: 600;
+            margin-right: calc(var(--spacing-unit) * 1);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
         }
 
         .badge.success {
-            background: rgba(34, 197, 94, 0.15);
-            border-color: rgba(34, 197, 94, 0.3);
-            color: #86efac;
+            background: var(--color-text-primary);
+            border-color: var(--color-text-primary);
+            color: var(--color-bg-primary);
         }
 
         .badge.danger {
-            background: rgba(239, 68, 68, 0.15);
-            border-color: rgba(239, 68, 68, 0.3);
-            color: #fca5a5;
+            background: var(--color-bg-primary);
+            border-color: var(--color-border-light);
+            color: var(--color-text-secondary);
         }
 
         .btn {
-            padding: 8px 16px;
-            background: rgba(139, 92, 246, 0.15);
-            border: 1px solid rgba(139, 92, 246, 0.3);
-            border-radius: 6px;
-            color: #a78bfa;
-            font-size: 13px;
-            font-weight: 500;
+            padding: calc(var(--spacing-unit) * 1) calc(var(--spacing-unit) * 2);
+            background: transparent;
+            border: 1px solid var(--color-border);
+            border-radius: 1px;
+            color: var(--color-text-secondary);
+            font-size: 10px;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
-            font-family: 'DM Sans', sans-serif;
+            font-family: 'IBM Plex Mono', monospace;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
         }
 
         .btn:hover {
-            background: rgba(139, 92, 246, 0.25);
+            background: var(--color-bg-tertiary);
+            border-color: var(--color-border-light);
+            color: var(--color-text-primary);
         }
 
         .btn-danger {
-            background: rgba(239, 68, 68, 0.15);
-            border-color: rgba(239, 68, 68, 0.3);
-            color: #fca5a5;
+            border-color: var(--color-border);
+            color: var(--color-text-tertiary);
         }
 
         .btn-danger:hover {
-            background: rgba(239, 68, 68, 0.25);
+            background: var(--color-text-primary);
+            border-color: var(--color-text-primary);
+            color: var(--color-bg-primary);
         }
 
         .btn-group {
             display: flex;
-            gap: 8px;
+            gap: calc(var(--spacing-unit) * 1);
         }
 
         .empty-state {
             text-align: center;
-            padding: 64px 24px;
-            color: #666;
-            font-size: 14px;
+            padding: calc(var(--spacing-unit) * 8) calc(var(--spacing-unit) * 3);
+            color: var(--color-text-tertiary);
+            font-size: 11px;
+            letter-spacing: 0.05em;
         }
 
         .loading {
             text-align: center;
-            padding: 64px 24px;
-            color: #888;
-            font-size: 14px;
+            padding: calc(var(--spacing-unit) * 8) calc(var(--spacing-unit) * 3);
+            color: var(--color-text-tertiary);
+            font-size: 11px;
+            letter-spacing: 0.05em;
         }
 
         .stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 24px;
-            margin-bottom: 32px;
+            gap: calc(var(--spacing-unit) * 3);
+            margin-bottom: calc(var(--spacing-unit) * 4);
         }
 
         .stat-card {
-            background: rgba(26, 26, 26, 0.8);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
-            padding: 24px;
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: 2px;
+            padding: calc(var(--spacing-unit) * 3);
+            position: relative;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .stat-card:hover {
+            border-color: var(--color-border-light);
+            transform: translateY(-2px);
+        }
+
+        .stat-card:hover::before {
+            opacity: 1;
         }
 
         .stat-label {
-            font-size: 13px;
-            color: #888;
-            font-weight: 500;
-            margin-bottom: 8px;
+            font-size: 10px;
+            color: var(--color-text-tertiary);
+            font-weight: 600;
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
         }
 
         .stat-value {
-            font-size: 32px;
-            font-weight: 700;
-            color: #e8e8e8;
+            font-family: 'Syne', sans-serif;
+            font-size: 36px;
+            font-weight: 800;
+            color: var(--color-text-primary);
+            letter-spacing: -0.02em;
         }
 
         .code {
-            font-family: 'Courier New', monospace;
-            font-size: 13px;
-            color: #a78bfa;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            color: var(--color-text-secondary);
+            background: var(--color-bg-primary);
+            padding: calc(var(--spacing-unit) * 0.5) calc(var(--spacing-unit) * 1);
+            border-radius: 1px;
         }
     </style>
 </head>
@@ -362,10 +450,11 @@
                                 <th>描述</th>
                                 <th>权限数量</th>
                                 <th>创建时间</th>
+                                <th>操作</th>
                             </tr>
                         </thead>
                         <tbody id="rolesTableBody">
-                            <tr><td colspan="5" class="loading">加载中...</td></tr>
+                            <tr><td colspan="6" class="loading">加载中...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -383,10 +472,11 @@
                                 <th>分组</th>
                                 <th>描述</th>
                                 <th>创建时间</th>
+                                <th>操作</th>
                             </tr>
                         </thead>
                         <tbody id="permissionsTableBody">
-                            <tr><td colspan="5" class="loading">加载中...</td></tr>
+                            <tr><td colspan="6" class="loading">加载中...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -475,9 +565,10 @@
                             <td>${user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString('zh-CN') : '-'}</td>
                             <td>
                                 <div class="btn-group">
-                                    <button class="btn btn-danger" onclick="toggleUserStatus(${user.id}, '${user.status}')">
+                                    <button class="btn" onclick="toggleUserStatus(${user.id}, '${user.status}')">
                                         ${user.status === 'active' ? '冻结' : '激活'}
                                     </button>
+                                    <button class="btn btn-danger" onclick="deleteUser(${user.id}, '${user.email}')">删除</button>
                                 </div>
                             </td>
                         </tr>
@@ -502,7 +593,7 @@
                     const tbody = document.getElementById('rolesTableBody');
 
                     if (result.data.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">暂无角色</td></tr>';
+                        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">暂无角色</td></tr>';
                         return;
                     }
 
@@ -513,6 +604,12 @@
                             <td>${role.description || '-'}</td>
                             <td>${role.permissionCount}</td>
                             <td>${new Date(role.createdAt).toLocaleString('zh-CN')}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <button class="btn" onclick="editRole(${role.id}, '${role.name}', '${role.description || ''}')">编辑</button>
+                                    <button class="btn btn-danger" onclick="deleteRole(${role.id}, '${role.name}')">删除</button>
+                                </div>
+                            </td>
                         </tr>
                     `).join('');
 
@@ -535,7 +632,7 @@
                     const tbody = document.getElementById('permissionsTableBody');
 
                     if (result.data.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">暂无权限</td></tr>';
+                        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">暂无权限</td></tr>';
                         return;
                     }
 
@@ -546,6 +643,12 @@
                             <td><span class="badge">${perm.group}</span></td>
                             <td>${perm.description || '-'}</td>
                             <td>${new Date(perm.createdAt).toLocaleString('zh-CN')}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <button class="btn" onclick="editPermission(${perm.id}, '${perm.key}', '${perm.group}', '${perm.description || ''}')">编辑</button>
+                                    <button class="btn btn-danger" onclick="deletePermission(${perm.id}, '${perm.key}')">删除</button>
+                                </div>
+                            </td>
                         </tr>
                     `).join('');
 
@@ -582,9 +685,152 @@
             }
         }
 
+        // 删除用户
+        async function deleteUser(userId, email) {
+            if (!confirm(`确定要删除用户 "${email}" 吗？此操作不可恢复。`)) return;
+
+            try {
+                const response = await fetch(`http://localhost:3000/api/users/${userId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.code === 0) {
+                    alert('用户删除成功');
+                    loadUsers();
+                } else {
+                    alert('删除失败: ' + result.message);
+                }
+            } catch (error) {
+                alert('删除失败');
+            }
+        }
+
         function logout() {
             localStorage.clear();
             window.location.href = '/demo/login.html';
+        }
+
+        // 编辑角色
+        async function editRole(id, name, description) {
+            const newName = prompt('编辑角色名称:', name);
+            if (!newName || newName === name) return;
+
+            const newDescription = prompt('编辑角色描述:', description);
+
+            try {
+                const response = await fetch(`http://localhost:3000/api/roles/${id}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: newName,
+                        description: newDescription || description
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.code === 0) {
+                    alert('角色更新成功');
+                    loadRoles();
+                } else {
+                    alert('更新失败: ' + result.message);
+                }
+            } catch (error) {
+                alert('更新失败');
+            }
+        }
+
+        // 删除角色
+        async function deleteRole(id, name) {
+            if (!confirm(`确定要删除角色 "${name}" 吗？此操作不可恢复。`)) return;
+
+            try {
+                const response = await fetch(`http://localhost:3000/api/roles/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.code === 0) {
+                    alert('角色删除成功');
+                    loadRoles();
+                } else {
+                    alert('删除失败: ' + result.message);
+                }
+            } catch (error) {
+                alert('删除失败');
+            }
+        }
+
+        // 编辑权限
+        async function editPermission(id, key, group, description) {
+            const newKey = prompt('编辑权限标识 (格式: resource:action):', key);
+            if (!newKey || newKey === key) return;
+
+            const newGroup = prompt('编辑权限分组:', group);
+            const newDescription = prompt('编辑权限描述:', description);
+
+            try {
+                const response = await fetch(`http://localhost:3000/api/permissions/${id}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        key: newKey,
+                        group: newGroup || group,
+                        description: newDescription || description
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.code === 0) {
+                    alert('权限更新成功');
+                    loadPermissions();
+                } else {
+                    alert('更新失败: ' + result.message);
+                }
+            } catch (error) {
+                alert('更新失败');
+            }
+        }
+
+        // 删除权限
+        async function deletePermission(id, key) {
+            if (!confirm(`确定要删除权限 "${key}" 吗？此操作不可恢复。`)) return;
+
+            try {
+                const response = await fetch(`http://localhost:3000/api/permissions/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.code === 0) {
+                    alert('权限删除成功');
+                    loadPermissions();
+                } else {
+                    alert('删除失败: ' + result.message);
+                }
+            } catch (error) {
+                alert('删除失败');
+            }
         }
 
         // 初始加载
