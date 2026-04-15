@@ -16,10 +16,10 @@ URP (User-Role-Permission) Core is a reusable RBAC permission management service
 
 - **Framework**: NestJS
 - **Database**: MySQL
-- **ORM**: Prisma
+- **ORM**: TypeORM (@nestjs/typeorm + typeorm)
 - **Authentication**: JWT (Access Token + Refresh Token)
 - **Password Hashing**: bcrypt
-- **Architecture**: Controller → Service → Repository (Prisma)
+- **Architecture**: Controller → Service → Repository (TypeORM Entities/Repositories)
 
 ## Database Schema
 

@@ -89,10 +89,10 @@ URP 核心表和逻辑无需修改，只需扩展权限数据即可。
 
 - **框架**: NestJS
 - **数据库**: MySQL
-- **ORM**: Prisma
+- **ORM**: TypeORM
 - **认证**: JWT (Access Token + Refresh Token)
 - **依赖注入**: NestJS IoC Container
-- **架构模式**: Controller → Service → Repository (Prisma)
+- **架构模式**: Controller → Service → Repository (TypeORM Entities/Repositories)
 
 ### 2.5 环境变量
 
@@ -245,7 +245,7 @@ const { data } = await api('/api/check', {
 ## 6. 路线图
 
 ### Phase 1: 核心引擎
-- Prisma Schema 与数据库迁移
+- TypeORM Entities 与数据库连接配置
 - JWT 认证与 API 路由
 - 统一响应格式与错误处理
 - Seed 数据初始化

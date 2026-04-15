@@ -9,7 +9,7 @@
 | # | 任务 | 说明 | 状态 |
 |---|------|------|------|
 | 1.1 | 初始化 NestJS 项目 | 使用 NestJS CLI 创建项目 | [ ] |
-| 1.2 | 安装 Prisma 依赖 | `@prisma/client`, `prisma` | [ ] |
+| 1.2 | 安装 TypeORM 依赖 | `typeorm`, `@nestjs/typeorm`, `mysql2` | [ ] |
 | 1.3 | 安装 JWT / bcrypt 依赖 | `@nestjs/jwt`, `@nestjs/passport`, `passport`, `passport-jwt`, `bcrypt` | [ ] |
 | 1.4 | 配置环境变量 | `.env` 文件，定义 DATABASE_URL, JWT_SECRET 等 | [ ] |
 | 1.5 | 配置 Prisma 连接 | `prisma/schema.prisma` 配置 MySQL 连接 | [ ] |
@@ -18,12 +18,12 @@
 
 | # | 任务 | 说明 | 状态 |
 |---|------|------|------|
-| 2.1 | 定义 Prisma Schema - User | id, email, password, status, lastLoginAt, createdAt, updatedAt | [ ] |
-| 2.2 | 定义 Prisma Schema - Role | id, name, description, createdAt, updatedAt | [ ] |
-| 2.3 | 定义 Prisma Schema - Permission | id, key, group, description, createdAt | [ ] |
-| 2.4 | 定义 Prisma Schema - UserRole | userId, roleId，联合唯一 | [ ] |
-| 2.5 | 定义 Prisma Schema - RolePermission | roleId, permissionId，联合唯一 | [ ] |
-| 2.6 | 执行数据库迁移 | `prisma migrate dev` | [ ] |
+| 2.1 | 定义 TypeORM Entity - User | id, email, password, status, lastLoginAt, createdAt, updatedAt | [ ] |
+| 2.2 | 定义 TypeORM Entity - Role | id, name, description, createdAt, updatedAt | [ ] |
+| 2.3 | 定义 TypeORM Entity - Permission | id, key, group, description, createdAt | [ ] |
+| 2.4 | 定义 TypeORM Entity - UserRole | userId, roleId，联合唯一 | [ ] |
+| 2.5 | 定义 TypeORM Entity - RolePermission | roleId, permissionId，联合唯一 | [ ] |
+| 2.6 | 配置 TypeORM 连接 | `app.module.ts` 中配置 MySQL 连接和 Entities | [ ] |
 | 2.7 | 实现 Seed 脚本 | 初始化 SuperAdmin + Guest 角色 | [ ] |
 
 ## 3. 认证模块 (AuthModule)

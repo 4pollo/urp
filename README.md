@@ -15,7 +15,7 @@
 | 技术 | 说明 |
 |------|------|
 | [NestJS](https://nestjs.com/) | 服务端框架 |
-| [Prisma](https://www.prisma.io/) | ORM (v5) |
+| [TypeORM](https://typeorm.io/) | ORM |
 | MySQL | 关系型数据库 |
 | Passport + JWT | 认证 |
 | bcrypt | 密码加密 |
@@ -60,14 +60,11 @@ CORS_ORIGIN="http://localhost:3000"
 ### 3. 初始化数据库
 
 ```bash
-# 生成 Prisma Client
-npx prisma generate
-
-# 执行数据库迁移
-npx prisma db push
+# 同步数据库表结构
+npm run typeorm:schema:sync
 
 # 初始化种子数据（创建 SuperAdmin/Guest 角色、基础权限、默认管理员）
-npm run prisma:seed
+npm run seed
 ```
 
 默认管理员账户：
@@ -202,10 +199,7 @@ npm run test:e2e
 npm run test:cov
 
 # 数据库种子
-npm run prisma:seed
-
-# Prisma Studio (可视化数据库)
-npx prisma studio
+npm run seed
 ```
 
 ## 项目结构
@@ -217,14 +211,18 @@ src/
 ├── roles/             # 角色管理 CRUD
 ├── permissions/       # 权限管理 CRUD
 ├── common/            # 全局拦截器、过滤器
-├── prisma.module.ts   # Prisma 模块
-├── prisma.service.ts  # Prisma 服务
+├── auth/              # JWT 认证相关
+│   ├── jwt.strategy.ts
+│   └── jwt-auth.guard.ts
+├── user/              # User Entity 和 Repository
+├── role/              # Role Entity 和 Repository
+├── permission/        # Permission Entity 和 Repository
+├── user-role/         # UserRole Entity 和 Repository
+├── role-permission/   # RolePermission Entity 和 Repository
+├── seed.ts            # 种子数据脚本
 ├── app.module.ts      # 根模块
 ├── app.controller.ts  # 根控制器
 └── main.ts            # 入口文件
-prisma/
-├── schema.prisma      # 数据模型定义
-└── seed.ts            # 种子数据
 public/demo/           # 静态示例页面
 ```
 
