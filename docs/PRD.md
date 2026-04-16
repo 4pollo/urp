@@ -1,48 +1,50 @@
 # 通用型用户-角色-权限管理系统 (URP) - 产品需求文档 (PRD)
 
-**版本**: v4.0  
-**日期**: 2026-04-14  
+**版本**: v4.1  
+**日期**: 2026-04-16  
 **产品名称**: URP (User-Role-Permission) Core  
-**文档状态**: 草案
+**文档状态**: 与当前实现对齐版
 
 ---
 
 ## 1. 产品概述
 
 ### 1.1 核心目标
-构建一个高度可重用的权限管理服务，基于 NestJS 提供标准 RESTful API。通过标准化的 RBAC 模型，解决各类应用开发中重复构建权限体系的问题。
+构建一个高度可重用的权限管理服务，基于 NestJS 提供标准 RESTful API。通过标准化的 RBAC 模型，降低各类应用重复搭建权限体系的成本。
 
 ### 1.2 核心价值
-- **高复用性**：纯后端 API 服务，前端直接调用，按需封装。
-- **解耦性**：权限逻辑与业务逻辑完全分离。
-- **高性能**：基于 MySQL 的轻量级实现，API 响应延迟 < 50ms。
+- **高复用性**：提供可直接集成的后端权限 API
+- **解耦性**：权限逻辑与业务逻辑分离
+- **可扩展性**：通过增加权限数据支撑新业务系统
 
 ---
 
-## 2. 功能架构
+## 2. 当前实现架构
 
 ### 2.1 核心模块
 
 | 模块 | 功能描述 | 关键实体 |
 |-----|---------|---------|
-| **用户管理** | 用户 CRUD，冻结/激活，角色绑定 | User, UserRole |
-| **角色管理** | 角色定义，权限分配 | Role, RolePermission |
-| **权限管理** | 原子权限点，支持分组 | Permission |
+| **认证模块** | 注册、登录、刷新 Token、修改密码、获取当前用户 | User, UserRole |
+| **用户管理** | 用户 CRUD、冻结/激活、分配角色 | User, UserRole |
+| **角色管理** | 角色 CRUD、分配权限 | Role, RolePermission |
+| **权限管理** | 权限 CRUD、权限查询、权限校验 | Permission |
+| **公共基础设施** | 统一响应、异常过滤、全局校验、静态资源托管 | - |
 
-### 2.2 数据库表结构
+### 2.2 数据模型
 
-#### User (用户表)
+#### User
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | id | INT AUTO_INCREMENT | 主键 |
 | email | VARCHAR(255) | 唯一，用于登录 |
 | password | VARCHAR(255) | bcrypt 哈希 |
-| status | ENUM('active', 'frozen') | 默认 active |
+| status | ENUM('active', 'frozen') | 用户状态 |
 | lastLoginAt | DATETIME | 最近登录时间 |
 | createdAt | DATETIME | 创建时间 |
 | updatedAt | DATETIME | 更新时间 |
 
-#### Role (角色表)
+#### Role
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | id | INT AUTO_INCREMENT | 主键 |
@@ -51,89 +53,102 @@
 | createdAt | DATETIME | 创建时间 |
 | updatedAt | DATETIME | 更新时间 |
 
-#### Permission (权限表)
+#### Permission
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | id | INT AUTO_INCREMENT | 主键 |
-| key | VARCHAR(100) | 权限标识，唯一，格式 `resource:action` |
-| group | VARCHAR(50) | 权限分组 (e.g., 'user', 'finance', 'system') |
+| key | VARCHAR(100) | 唯一，格式 `resource:action` |
+| group | VARCHAR(50) | 权限分组 |
 | description | VARCHAR(255) | 描述 |
 | createdAt | DATETIME | 创建时间 |
 
-#### UserRole (用户-角色 关联表)
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| userId | INT | FK → User.id |
-| roleId | INT | FK → Role.id |
+#### UserRole
+- `userId` → `User.id`
+- `roleId` → `Role.id`
+- 联合唯一索引：`UNIQUE(userId, roleId)`
 
-> 联合唯一索引: `UNIQUE(userId, roleId)`
+#### RolePermission
+- `roleId` → `Role.id`
+- `permissionId` → `Permission.id`
+- 联合唯一索引：`UNIQUE(roleId, permissionId)`
 
-#### RolePermission (角色-权限 关联表)
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| roleId | INT | FK → Role.id |
-| permissionId | INT | FK → Permission.id |
+### 2.3 技术架构
 
-> 联合唯一索引: `UNIQUE(roleId, permissionId)`
+- **框架**：NestJS
+- **数据库**：MySQL
+- **ORM**：TypeORM
+- **认证**：JWT（Access Token + Refresh Token）
+- **架构模式**：Controller → Service → TypeORM Repository
+- **输入校验**：ValidationPipe + class-validator
+- **响应包装**：全局 Interceptor
+- **错误处理**：全局 Exception Filter
 
-### 2.3 复用适配方式
-
-当创建新业务系统 (如财务管理系统) 时：
-1. 向 `permission` 表插入业务权限，如 `invoice:create`，group 设为 `finance`
-2. 通过 `role_permission` 关联表将权限分配给角色
-3. 在业务代码中调用权限校验
-
-URP 核心表和逻辑无需修改，只需扩展权限数据即可。
-
-### 2.4 技术架构
-
-- **框架**: NestJS
-- **数据库**: MySQL
-- **ORM**: TypeORM
-- **认证**: JWT (Access Token + Refresh Token)
-- **依赖注入**: NestJS IoC Container
-- **架构模式**: Controller → Service → Repository (TypeORM Entities/Repositories)
-
-### 2.5 环境变量
+### 2.4 环境变量
 
 | 变量 | 说明 | 示例 |
 |------|------|------|
-| `DATABASE_URL` | MySQL 连接字符串 | `mysql://user:pass@localhost:3306/urp` |
-| `JWT_SECRET` | JWT 签名密钥 | 随机字符串 |
+| `DB_HOST` | 数据库地址 | `localhost` |
+| `DB_PORT` | 数据库端口 | `3306` |
+| `DB_USERNAME` | 数据库用户名 | `root` |
+| `DB_PASSWORD` | 数据库密码 | `password` |
+| `DB_DATABASE` | 数据库名 | `urp` |
+| `JWT_SECRET` | JWT 签名密钥 | `your-secret-key` |
 | `JWT_ACCESS_EXPIRES` | Access Token 过期时间 | `15m` |
 | `JWT_REFRESH_EXPIRES` | Refresh Token 过期时间 | `7d` |
 | `CORS_ORIGIN` | 允许的跨域来源 | `http://localhost:3000` |
+| `PORT` | 服务监听端口，可选 | `3000` |
 
 ---
 
-## 3. 核心功能描述
+## 3. 当前实现功能说明
 
-### 3.1 权限定义
+### 3.1 认证流程
+- **注册**：邮箱 + 密码 → bcrypt 哈希 → 创建用户 → 尝试分配 `Guest` → 返回 access/refresh token
+- **登录**：验证邮箱密码 → 校验用户状态 → 更新 `lastLoginAt` → 返回 access/refresh token
+- **刷新 Token**：验证 refresh token 后签发新的 access token
+- **修改密码**：校验旧密码后更新密码哈希
+- **获取当前用户**：通过 JWT 获取当前用户信息及角色
 
-权限采用 `resource:action` 格式，例如：
-- `user:read`, `user:write`, `user:delete`
-- `system:config`
+### 3.2 用户管理
+- 分页查询用户列表
+- 查看用户详情
+- 创建用户
+- 更新用户邮箱
+- 删除用户
+- 冻结/激活用户
+- 覆盖式分配角色
 
-### 3.2 注册与登录
+### 3.3 角色管理
+- 角色列表
+- 角色详情
+- 创建角色
+- 更新角色
+- 删除角色
+- 覆盖式分配权限
 
-**注册**: `email` + `password` → bcrypt 哈希 → 自动分配 `Guest` 角色 → 返回 JWT
+### 3.4 权限管理与校验
+- 权限列表（支持按 group 过滤）
+- 权限详情
+- 创建权限
+- 更新权限
+- 删除权限
+- 获取当前用户权限列表
+- 校验当前用户是否拥有某权限
 
-**登录**: `email` + `password` → 比对 bcrypt → 检查状态 (冻结拒绝) → 返回 JWT
+说明：当前实现提供权限查询与权限校验 API，但尚未在控制器层引入基于权限点的 Guard。
 
-**修改密码**: 用户提供旧密码 + 新密码 → 修改后清除 Refresh Token
+### 3.5 数据初始化（Seed）
+当前通过独立脚本执行：
 
-### 3.3 角色与分配
+```bash
+npm run seed
+```
 
-- **内置角色**: `SuperAdmin` (拥有所有权限), `Guest` (默认权限)
-- **多角色**: 用户可拥有多个角色，最终权限为所有角色权限的并集
-
-### 3.4 权限校验
-
-服务端通过 JWT 解析用户身份，查询角色关联的权限集，判断是否包含目标权限。
-
-### 3.5 数据初始化 (Seed)
-
-首次启动时自动创建 `SuperAdmin` 和 `Guest` 角色。
+种子脚本会：
+- 创建 `SuperAdmin` 和 `Guest` 角色
+- 初始化基础权限
+- 为 `SuperAdmin` 分配全部已初始化权限
+- 创建默认管理员 `admin@example.com / admin123`
 
 ---
 
@@ -144,59 +159,52 @@ URP 核心表和逻辑无需修改，只需扩展权限数据即可。
 |------|------|------|
 | POST | `/api/auth/register` | 注册 |
 | POST | `/api/auth/login` | 登录 |
-| POST | `/api/auth/refresh` | 刷新 Token |
+| POST | `/api/auth/refresh` | 刷新 Access Token |
 | POST | `/api/auth/change-password` | 修改密码 |
 | GET | `/api/auth/me` | 获取当前用户信息 |
 
-### 4.2 用户管理
+### 4.2 用户管理（均需要 JWT）
 | 方法 | 路径 | 描述 |
 |------|------|------|
-| GET | `/api/users` | 用户列表 (分页) |
+| GET | `/api/users` | 用户列表 |
 | POST | `/api/users` | 创建用户 |
 | GET | `/api/users/:id` | 用户详情 |
 | PUT | `/api/users/:id` | 更新用户 |
 | DELETE | `/api/users/:id` | 删除用户 |
 | PATCH | `/api/users/:id/status` | 冻结/激活 |
-| PUT | `/api/users/:id/roles` | 分配角色 (覆盖) |
+| PUT | `/api/users/:id/roles` | 分配角色 |
 
-### 4.3 角色管理
+### 4.3 角色管理（均需要 JWT）
 | 方法 | 路径 | 描述 |
 |------|------|------|
 | GET | `/api/roles` | 角色列表 |
+| GET | `/api/roles/:id` | 角色详情 |
 | POST | `/api/roles` | 创建角色 |
 | PUT | `/api/roles/:id` | 更新角色 |
 | DELETE | `/api/roles/:id` | 删除角色 |
-| PUT | `/api/roles/:id/permissions` | 授权 (覆盖) |
+| PUT | `/api/roles/:id/permissions` | 授权 |
 
-### 4.4 权限管理
+### 4.4 权限管理（均需要 JWT）
 | 方法 | 路径 | 描述 |
 |------|------|------|
 | GET | `/api/permissions` | 权限列表 |
+| GET | `/api/permissions/:id` | 权限详情 |
+| GET | `/api/permissions/me` | 当前用户权限列表 |
 | POST | `/api/permissions` | 创建权限 |
 | PUT | `/api/permissions/:id` | 更新权限 |
 | DELETE | `/api/permissions/:id` | 删除权限 |
-
-### 4.5 权限校验
-| 方法 | 路径 | 描述 |
-|------|------|------|
 | POST | `/api/check` | 校验权限 |
-| GET | `/api/permissions/me` | 获取当前用户权限列表 |
 
-### 4.6 统一响应格式
+### 4.5 统一响应格式
 
-成功:
+成功：
 ```json
 { "code": 0, "data": {}, "message": "success" }
 ```
 
-错误:
+错误：
 ```json
-{ "code": 4001, "message": "Invalid credentials" }
-```
-
-分页:
-```json
-{ "code": 0, "data": { "items": [], "total": 100, "page": 1, "limit": 10 } }
+{ "code": 4001, "message": "Invalid credentials", "data": null }
 ```
 
 ---
@@ -205,62 +213,37 @@ URP 核心表和逻辑无需修改，只需扩展权限数据即可。
 
 ### 5.1 内置示例页面
 
-路径 `/demo`，非生产级 UI，用于演示注册、登录、权限管理流程。
-- `/demo/register` - 注册页面
-- `/demo/login` - 登录页面
-- `/demo/dashboard` - 用户面板
-- `/demo/admin` - 管理面板 (需 SuperAdmin)
+静态页面由 Nest 托管在 `public/demo/`：
+- `/demo/register.html` - 注册页面
+- `/demo/login.html` - 登录页面
+- `/demo/dashboard.html` - 用户面板
+- `/demo/admin.html` - 管理面板
 
-### 5.2 前端调用示例
-
-```typescript
-async function api(path: string, options: RequestInit = {}) {
-  const token = localStorage.getItem('token');
-  const res = await fetch(`http://localhost:3000${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
-    },
-  });
-  return res.json();
-}
-
-// 登录
-const { data } = await api('/api/auth/login', {
-  method: 'POST',
-  body: JSON.stringify({ email, password }),
-});
-localStorage.setItem('token', data.accessToken);
-
-// 权限校验
-const { data } = await api('/api/check', {
-  method: 'POST',
-  body: JSON.stringify({ permission: 'user:write' }),
-});
-```
+### 5.2 前端调用约束
+- Demo 页面中的接口地址当前写死为 `http://localhost:3000/api/...`
+- Token 与用户信息当前保存在 `localStorage`
+- 管理面板通过前端接口结果判断当前用户是否具备 `SuperAdmin` 角色
 
 ---
 
-## 6. 路线图
+## 6. 后续路线图
 
-### Phase 1: 核心引擎
-- TypeORM Entities 与数据库连接配置
-- JWT 认证与 API 路由
-- 统一响应格式与错误处理
-- Seed 数据初始化
+### P0
+- 统一文档与实现
+- 增加真正的基于权限点的路由拦截
+- 修复 JWT 默认密钥等高风险安全问题
 
-### Phase 2: 示例与文档
-- 简单前端示例页面
-- 集成文档与示例代码
+### P1
+- 补齐核心业务测试
+- 收敛前端 Demo 实现
+- 优化配置与数据库交付流程
 
-### Phase 3: 高级特性 (待定)
-- 基于条件的动态权限 (ABAC)
-- 第三方身份验证集成
+### P2
+- 增强复用性文档与部署说明
+- 评估更完整的权限扩展能力（如 ABAC）
 
 ---
 
-## 7. 成功指标
-- **集成成本**: 新项目集成时间 < 1 小时
-- **性能**: API 响应延迟 < 50ms
-- **灵活性**: 支撑至少 5 个不同业务系统无需修改核心代码
+## 7. 当前状态说明
+
+当前项目已经实现 RBAC 数据模型、认证流程、用户/角色/权限 CRUD、权限查询与静态 Demo 页面，但仍需在授权控制、安全性、测试覆盖率和文档一致性上继续完善。
