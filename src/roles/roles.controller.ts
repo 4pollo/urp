@@ -14,9 +14,12 @@ import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { AssignPermissionsDto } from './dto/assign-permissions.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { AccessGuard } from '../auth/access.guard';
+import { RequireRoles } from '../auth/access.decorator';
 
 @Controller('api/roles')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, AccessGuard)
+@RequireRoles('SuperAdmin')
 export class RolesController {
   constructor(private rolesService: RolesService) {}
 

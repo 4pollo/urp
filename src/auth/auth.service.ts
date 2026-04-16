@@ -1,4 +1,9 @@
-import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -53,7 +58,12 @@ export class AuthService {
       });
     }
 
-    const tokens = await this.generateTokens(user.id, user.email);
+    const tokens = this.generateTokens(user.id, user.email);
+    await this.storeRefreshToken(
+      user.id,
+      tokens.refreshToken,
+      tokens.refreshTokenExpiresAt,
+    );
 
     return {
       accessToken: tokens.accessToken,
@@ -88,7 +98,12 @@ export class AuthService {
 
     await this.userRepo.update(user.id, { lastLoginAt: new Date() });
 
-    const tokens = await this.generateTokens(user.id, user.email);
+    const tokens = this.generateTokens(user.id, user.email);
+    await this.storeRefreshToken(
+      user.id,
+      tokens.refreshToken,
+      tokens.refreshTokenExpiresAt,
+    );
 
     return {
       accessToken: tokens.accessToken,
@@ -103,8 +118,14 @@ export class AuthService {
 
   async refreshToken(refreshToken: string) {
     try {
-      const payload = this.jwtService.verify(refreshToken, {
-        secret: this.configService.get('JWT_SECRET'),
+      const jwtSecret = this.configService.get<string>('JWT_SECRET');
+
+      if (!jwtSecret) {
+        throw new Error('JWT_SECRET is required');
+      }
+
+      const payload = this.jwtService.verify<{ sub: number }>(refreshToken, {
+        secret: jwtSecret,
       });
 
       const user = await this.userRepo.findOne({
@@ -115,12 +136,36 @@ export class AuthService {
         throw new UnauthorizedException('Invalid token');
       }
 
-      const tokens = await this.generateTokens(user.id, user.email);
+      if (!user.refreshTokenHash || !user.refreshTokenExpiresAt) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
+      if (user.refreshTokenExpiresAt.getTime() <= Date.now()) {
+        await this.clearRefreshToken(user.id);
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
+      const isRefreshTokenValid = await bcrypt.compare(
+        refreshToken,
+        user.refreshTokenHash,
+      );
+
+      if (!isRefreshTokenValid) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
+      const tokens = this.generateTokens(user.id, user.email);
+      await this.storeRefreshToken(
+        user.id,
+        tokens.refreshToken,
+        tokens.refreshTokenExpiresAt,
+      );
 
       return {
         accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
       };
-    } catch (error) {
+    } catch {
       throw new UnauthorizedException('Invalid refresh token');
     }
   }
@@ -143,7 +188,11 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(newPassword, 12);
 
-    await this.userRepo.update(userId, { password: hashedPassword });
+    await this.userRepo.update(userId, {
+      password: hashedPassword,
+      refreshTokenHash: null,
+      refreshTokenExpiresAt: null,
+    });
 
     return { message: 'Password changed successfully' };
   }
@@ -174,19 +223,73 @@ export class AuthService {
     };
   }
 
-  private async generateTokens(userId: number, email: string) {
+  private generateTokens(userId: number, email: string) {
+    const jwtSecret = this.configService.get<string>('JWT_SECRET');
+
+    if (!jwtSecret) {
+      throw new Error('JWT_SECRET is required');
+    }
+
     const payload = { sub: userId, email };
 
     const accessToken = this.jwtService.sign(payload, {
-      secret: this.configService.get('JWT_SECRET'),
+      secret: jwtSecret,
       expiresIn: this.configService.get('JWT_ACCESS_EXPIRES') || '15m',
     });
 
+    const refreshTokenExpiresIn =
+      this.configService.get<string>('JWT_REFRESH_EXPIRES') || '7d';
     const refreshToken = this.jwtService.sign(payload, {
-      secret: this.configService.get('JWT_SECRET'),
-      expiresIn: this.configService.get('JWT_REFRESH_EXPIRES') || '7d',
+      secret: jwtSecret,
+      expiresIn: refreshTokenExpiresIn,
     });
 
-    return { accessToken, refreshToken };
+    return {
+      accessToken,
+      refreshToken,
+      refreshTokenExpiresAt: this.resolveExpiry(refreshTokenExpiresIn),
+    };
+  }
+
+  private async storeRefreshToken(
+    userId: number,
+    refreshToken: string,
+    refreshTokenExpiresAt: Date,
+  ) {
+    const refreshTokenHash = await bcrypt.hash(refreshToken, 12);
+
+    await this.userRepo.update(userId, {
+      refreshTokenHash,
+      refreshTokenExpiresAt,
+    });
+  }
+
+  private async clearRefreshToken(userId: number) {
+    await this.userRepo.update(userId, {
+      refreshTokenHash: null,
+      refreshTokenExpiresAt: null,
+    });
+  }
+
+  private resolveExpiry(expiresIn: string): Date {
+    const now = Date.now();
+    const match = expiresIn.match(/^(\d+)([smhd])$/);
+
+    if (!match) {
+      return new Date(now + 7 * 24 * 60 * 60 * 1000);
+    }
+
+    const value = parseInt(match[1], 10);
+    const unit = match[2];
+    const multiplier =
+      unit === 's'
+        ? 1000
+        : unit === 'm'
+          ? 60 * 1000
+          : unit === 'h'
+            ? 60 * 60 * 1000
+            : 24 * 60 * 60 * 1000;
+
+    return new Date(now + value * multiplier);
   }
 }

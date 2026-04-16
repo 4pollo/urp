@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Permission } from './entities/permission.entity';
@@ -11,10 +16,12 @@ import { UpdatePermissionDto } from './dto/update-permission.dto';
 @Injectable()
 export class PermissionsService {
   constructor(
-    @InjectRepository(Permission) private permissionRepo: Repository<Permission>,
+    @InjectRepository(Permission)
+    private permissionRepo: Repository<Permission>,
     @InjectRepository(UserRole) private userRoleRepo: Repository<UserRole>,
     @InjectRepository(Role) private roleRepo: Repository<Role>,
-    @InjectRepository(RolePermission) private rolePermissionRepo: Repository<RolePermission>,
+    @InjectRepository(RolePermission)
+    private rolePermissionRepo: Repository<RolePermission>,
   ) {}
 
   async findAll(group?: string) {
@@ -71,6 +78,10 @@ export class PermissionsService {
       throw new NotFoundException('Permission not found');
     }
 
+    if (this.isSystemPermission(permission.key)) {
+      throw new BadRequestException('System permissions cannot be modified');
+    }
+
     if (updatePermissionDto.key && updatePermissionDto.key !== permission.key) {
       const existingPermission = await this.permissionRepo.findOne({
         where: { key: updatePermissionDto.key },
@@ -93,6 +104,10 @@ export class PermissionsService {
 
     if (!permission) {
       throw new NotFoundException('Permission not found');
+    }
+
+    if (this.isSystemPermission(permission.key)) {
+      throw new BadRequestException('System permissions cannot be deleted');
     }
 
     await this.permissionRepo.delete(id);
@@ -150,5 +165,20 @@ export class PermissionsService {
       permissions: Array.from(permissions),
       roles: Array.from(roles),
     };
+  }
+
+  private isSystemPermission(permissionKey: string) {
+    return [
+      'user:read',
+      'user:write',
+      'user:delete',
+      'role:read',
+      'role:write',
+      'role:delete',
+      'permission:read',
+      'permission:write',
+      'permission:delete',
+      'system:manage',
+    ].includes(permissionKey);
   }
 }

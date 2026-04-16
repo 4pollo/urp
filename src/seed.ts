@@ -1,4 +1,4 @@
-import "reflect-metadata";
+import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './users/entities/user.entity';
@@ -77,16 +77,20 @@ async function main() {
   const allPermissions = await permRepo.find();
   for (const perm of allPermissions) {
     const existing = await rpRepo.findOne({
-      where: { roleId: superAdmin!.id, permissionId: perm.id },
+      where: { roleId: superAdmin.id, permissionId: perm.id },
     });
     if (!existing) {
-      await rpRepo.save(rpRepo.create({ roleId: superAdmin!.id, permissionId: perm.id }));
+      await rpRepo.save(
+        rpRepo.create({ roleId: superAdmin.id, permissionId: perm.id }),
+      );
     }
   }
   console.log('Assigned all permissions to SuperAdmin');
 
   // Create admin user
-  let adminUser = await userRepo.findOne({ where: { email: 'admin@example.com' } });
+  let adminUser = await userRepo.findOne({
+    where: { email: 'admin@example.com' },
+  });
   if (!adminUser) {
     const hashedPassword = await bcrypt.hash('admin123', 12);
     adminUser = userRepo.create({
@@ -100,13 +104,15 @@ async function main() {
 
   // Assign SuperAdmin role to admin
   const existingUr = await urRepo.findOne({
-    where: { userId: adminUser!.id, roleId: superAdmin!.id },
+    where: { userId: adminUser.id, roleId: superAdmin.id },
   });
   if (!existingUr) {
-    await urRepo.save(urRepo.create({
-      userId: adminUser!.id,
-      roleId: superAdmin!.id,
-    }));
+    await urRepo.save(
+      urRepo.create({
+        userId: adminUser.id,
+        roleId: superAdmin.id,
+      }),
+    );
     console.log('Assigned SuperAdmin role to admin user');
   }
 
@@ -116,5 +122,7 @@ async function main() {
   await dataSource.destroy();
 }
 
-main()
-  .catch((e) => { console.error(e); process.exit(1); });
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

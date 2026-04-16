@@ -13,14 +13,20 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     private configService: ConfigService,
     @InjectRepository(User) private userRepo: Repository<User>,
   ) {
+    const jwtSecret = configService.get<string>('JWT_SECRET');
+
+    if (!jwtSecret) {
+      throw new Error('JWT_SECRET is required');
+    }
+
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.get('JWT_SECRET') || 'default-secret-key',
+      secretOrKey: jwtSecret,
     });
   }
 
-  async validate(payload: any) {
+  async validate(payload: { sub: number }) {
     const user = await this.userRepo.findOne({
       where: { id: payload.sub },
     });

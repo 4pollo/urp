@@ -36,7 +36,11 @@ async function bootstrap() {
   });
 
   await app.listen(process.env.PORT ?? 3000);
-  console.log(`Application is running on: http://localhost:${process.env.PORT ?? 3000}`);
-  console.log(`Demo pages available at: http://localhost:${process.env.PORT ?? 3000}/demo/login.html`);
+  console.log(
+    `Application is running on: http://localhost:${process.env.PORT ?? 3000}`,
+  );
+  console.log(
+    `Demo pages available at: http://localhost:${process.env.PORT ?? 3000}/demo/login.html`,
+  );
 }
-bootstrap();
+void bootstrap();

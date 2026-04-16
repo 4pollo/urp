@@ -7,6 +7,10 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 
+interface ExceptionResponseBody {
+  message?: string | string[];
+}
+
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
@@ -23,11 +27,17 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
       if (typeof exceptionResponse === 'string') {
         message = exceptionResponse;
-      } else if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
-        message = (exceptionResponse as any).message || message;
+      } else if (
+        typeof exceptionResponse === 'object' &&
+        exceptionResponse !== null &&
+        'message' in exceptionResponse
+      ) {
+        const responseBody = exceptionResponse as ExceptionResponseBody;
+        message = Array.isArray(responseBody.message)
+          ? responseBody.message.join(', ')
+          : responseBody.message || message;
       }
 
-      // 映射 HTTP 状态码到自定义错误码
       switch (status) {
         case HttpStatus.UNAUTHORIZED:
           code = 4001;
@@ -45,7 +55,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
           code = 4006;
           break;
         default:
-          code = status >= 500 ? 5000 : 4000;
+          code = status >= HttpStatus.INTERNAL_SERVER_ERROR ? 5000 : 4000;
       }
     }
 

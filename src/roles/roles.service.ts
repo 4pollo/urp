@@ -1,6 +1,11 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Role } from './entities/role.entity';
 import { RolePermission } from './entities/role-permission.entity';
 import { Permission } from '../permissions/entities/permission.entity';
@@ -12,8 +17,10 @@ import { AssignPermissionsDto } from './dto/assign-permissions.dto';
 export class RolesService {
   constructor(
     @InjectRepository(Role) private roleRepo: Repository<Role>,
-    @InjectRepository(RolePermission) private rolePermissionRepo: Repository<RolePermission>,
-    @InjectRepository(Permission) private permissionRepo: Repository<Permission>,
+    @InjectRepository(RolePermission)
+    private rolePermissionRepo: Repository<RolePermission>,
+    @InjectRepository(Permission)
+    private permissionRepo: Repository<Permission>,
   ) {}
 
   async findAll() {
@@ -99,6 +106,10 @@ export class RolesService {
       throw new NotFoundException('Role not found');
     }
 
+    if (role.name === 'SuperAdmin' || role.name === 'Guest') {
+      throw new BadRequestException('System roles cannot be modified');
+    }
+
     if (updateRoleDto.name && updateRoleDto.name !== role.name) {
       const existingRole = await this.roleRepo.findOne({
         where: { name: updateRoleDto.name },
@@ -124,26 +135,47 @@ export class RolesService {
       throw new NotFoundException('Role not found');
     }
 
+    if (role.name === 'SuperAdmin' || role.name === 'Guest') {
+      throw new BadRequestException('System roles cannot be deleted');
+    }
+
     await this.roleRepo.delete(id);
 
     return { message: 'Role deleted successfully' };
   }
 
-  async assignPermissions(id: number, assignPermissionsDto: AssignPermissionsDto) {
+  async assignPermissions(
+    id: number,
+    assignPermissionsDto: AssignPermissionsDto,
+  ) {
     const role = await this.roleRepo.findOne({ where: { id } });
 
     if (!role) {
       throw new NotFoundException('Role not found');
     }
 
-    await this.rolePermissionRepo.delete({ roleId: id });
-
-    for (const permissionId of assignPermissionsDto.permissionIds) {
-      await this.rolePermissionRepo.save({
-        roleId: id,
-        permissionId,
-      });
+    if (role.name === 'SuperAdmin' || role.name === 'Guest') {
+      throw new BadRequestException('System roles cannot be modified');
     }
+
+    const permissions = await this.permissionRepo.find({
+      where: { id: In(assignPermissionsDto.permissionIds) },
+    });
+
+    if (permissions.length !== assignPermissionsDto.permissionIds.length) {
+      throw new BadRequestException('One or more permissions do not exist');
+    }
+
+    await this.rolePermissionRepo.manager.transaction(async (manager) => {
+      await manager.delete(RolePermission, { roleId: id });
+
+      for (const permissionId of assignPermissionsDto.permissionIds) {
+        await manager.save(RolePermission, {
+          roleId: id,
+          permissionId,
+        });
+      }
+    });
 
     return { message: 'Permissions assigned successfully' };
   }

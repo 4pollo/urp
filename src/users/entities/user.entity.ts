@@ -26,6 +26,12 @@ export class User {
   @Column({ type: 'datetime', nullable: true })
   lastLoginAt: Date | null;
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  refreshTokenHash: string | null;
+
+  @Column({ type: 'datetime', nullable: true })
+  refreshTokenExpiresAt: Date | null;
+
   @CreateDateColumn({ type: 'datetime' })
   createdAt: Date;
 

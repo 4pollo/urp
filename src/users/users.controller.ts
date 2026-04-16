@@ -17,6 +17,8 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateUserStatusDto } from './dto/update-user-status.dto';
 import { AssignRolesDto } from './dto/assign-roles.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { AccessGuard } from '../auth/access.guard';
+import { RequireRoles } from '../auth/access.decorator';
 
 @Controller('api/users')
 @UseGuards(JwtAuthGuard)
@@ -44,6 +46,8 @@ export class UsersController {
   }
 
   @Post()
+  @UseGuards(AccessGuard)
+  @RequireRoles('SuperAdmin')
   async create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
   }
@@ -57,11 +61,15 @@ export class UsersController {
   }
 
   @Delete(':id')
+  @UseGuards(AccessGuard)
+  @RequireRoles('SuperAdmin')
   async remove(@Param('id', ParseIntPipe) id: number) {
     return this.usersService.remove(id);
   }
 
   @Patch(':id/status')
+  @UseGuards(AccessGuard)
+  @RequireRoles('SuperAdmin')
   async updateStatus(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateUserStatusDto: UpdateUserStatusDto,
@@ -70,6 +78,8 @@ export class UsersController {
   }
 
   @Put(':id/roles')
+  @UseGuards(AccessGuard)
+  @RequireRoles('SuperAdmin')
   async assignRoles(
     @Param('id', ParseIntPipe) id: number,
     @Body() assignRolesDto: AssignRolesDto,

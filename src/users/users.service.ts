@@ -1,6 +1,12 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, In, Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { UserRole } from './entities/user-role.entity';
 import { Role } from '../roles/entities/role.entity';
@@ -10,6 +16,18 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateUserStatusDto } from './dto/update-user-status.dto';
 import { AssignRolesDto } from './dto/assign-roles.dto';
 
+interface UserListItem {
+  id: number;
+  email: string;
+  status: UserStatus;
+  lastLoginAt: Date | null;
+  createdAt: Date;
+  roles: Array<{
+    id: number;
+    name: string;
+  }>;
+}
+
 @Injectable()
 export class UsersService {
   constructor(
@@ -18,18 +36,24 @@ export class UsersService {
     @InjectRepository(Role) private roleRepo: Repository<Role>,
   ) {}
 
-  async findAll(page: number = 1, limit: number = 10, status?: string, roleId?: number) {
+  async findAll(
+    page: number = 1,
+    limit: number = 10,
+    status?: string,
+    roleId?: number,
+  ) {
     const skip = (page - 1) * limit;
-    const where: any = {};
+    const where: FindOptionsWhere<User> = {};
 
-    if (status) {
+    if (status === UserStatus.ACTIVE || status === UserStatus.FROZEN) {
       where.status = status;
     }
 
     if (roleId) {
       const [items, total] = await this.userRepo
         .createQueryBuilder('user')
-        .innerJoin('user.roles', 'ur')
+        .leftJoinAndSelect('user.roles', 'ur')
+        .leftJoinAndSelect('ur.role', 'role')
         .where('ur.roleId = :roleId', { roleId })
         .skip(skip)
         .take(limit)
@@ -37,17 +61,7 @@ export class UsersService {
         .getManyAndCount();
 
       return {
-        items: items.map((user) => ({
-          id: user.id,
-          email: user.email,
-          status: user.status,
-          lastLoginAt: user.lastLoginAt,
-          createdAt: user.createdAt,
-          roles: user.roles.map((ur) => ({
-            id: ur.role.id,
-            name: ur.role.name,
-          })),
-        })),
+        items: items.map((user) => this.toUserListItem(user)),
         total,
         page,
         limit,
@@ -69,17 +83,7 @@ export class UsersService {
     });
 
     return {
-      items: items.map((user) => ({
-        id: user.id,
-        email: user.email,
-        status: user.status,
-        lastLoginAt: user.lastLoginAt,
-        createdAt: user.createdAt,
-        roles: user.roles.map((ur) => ({
-          id: ur.role.id,
-          name: ur.role.name,
-        })),
-      })),
+      items: items.map((user) => this.toUserListItem(user)),
       total,
       page,
       limit,
@@ -126,7 +130,7 @@ export class UsersService {
       throw new ConflictException('Email already exists');
     }
 
-    const hashedPassword = require('bcrypt').hashSync(password, 12);
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     const user = this.userRepo.create({
       email,
@@ -205,7 +209,11 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    await this.userRepo.update(id, { status: updateUserStatusDto.status });
+    await this.userRepo.update(id, {
+      status: updateUserStatusDto.status,
+      refreshTokenHash: null,
+      refreshTokenExpiresAt: null,
+    });
 
     return { message: 'User status updated successfully' };
   }
@@ -217,15 +225,44 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    await this.userRoleRepo.delete({ userId: id });
+    const roles = await this.roleRepo.find({
+      where: { id: In(assignRolesDto.roleIds) },
+    });
 
-    for (const roleId of assignRolesDto.roleIds) {
-      await this.userRoleRepo.save({
-        userId: id,
-        roleId,
-      });
+    if (roles.length !== assignRolesDto.roleIds.length) {
+      throw new BadRequestException('One or more roles do not exist');
     }
 
+    await this.userRoleRepo.manager.transaction(async (manager) => {
+      await manager.delete(UserRole, { userId: id });
+
+      for (const roleId of assignRolesDto.roleIds) {
+        await manager.save(UserRole, {
+          userId: id,
+          roleId,
+        });
+      }
+
+      await manager.update(User, id, {
+        refreshTokenHash: null,
+        refreshTokenExpiresAt: null,
+      });
+    });
+
     return { message: 'Roles assigned successfully' };
+  }
+
+  private toUserListItem(user: User): UserListItem {
+    return {
+      id: user.id,
+      email: user.email,
+      status: user.status,
+      lastLoginAt: user.lastLoginAt,
+      createdAt: user.createdAt,
+      roles: user.roles.map((userRole) => ({
+        id: userRole.role.id,
+        name: userRole.role.name,
+      })),
+    };
   }
 }
