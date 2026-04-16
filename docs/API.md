@@ -82,12 +82,15 @@
 ```json
 {
   "code": 0,
-  "data": { "accessToken": "eyJ..." },
+  "data": {
+    "accessToken": "eyJ...",
+    "refreshToken": "eyJ..."
+  },
   "message": "success"
 }
 ```
 
-说明：当前实现仅返回新的 `accessToken`，不会轮换 `refreshToken`。
+说明：当前实现会签发新的 `accessToken` 与新的 `refreshToken`；旧 refresh token 在轮换后失效。
 
 ### 1.4 修改密码 `POST /api/auth/change-password`
 
@@ -439,8 +442,144 @@
 
 ---
 
-## 6. 备注
+## 6. 典型集成流程
 
-- 当前管理接口统一要求 JWT，但尚未在控制器层基于权限点做路由拦截
+### 6.1 底模最小接入流程
+适合“基于 URP 快速派生一个客户项目”的场景：
+
+1. 配置数据库与 JWT 环境变量
+2. 启动服务并执行 `npm run seed`
+3. 使用默认管理员登录，确认用户 / 角色 / 权限主链路正常
+4. 通过管理接口或 seed 新增客户业务权限点
+5. 创建客户角色并为角色授权
+6. 给目标用户分配角色
+7. 在新业务接口接入 `JwtAuthGuard` + `AccessGuard`
+8. 前端调用 `/api/auth/me` 与 `/api/permissions/me` 获取当前用户上下文
+
+### 6.2 新增业务权限点示例
+以 `invoice:read` 为例，推荐流程：
+
+1. 按 `resource:action` 约定定义权限 key
+2. 通过 `POST /api/permissions` 创建权限，例如：
+```json
+{ "key": "invoice:read", "group": "invoice", "description": "查看发票" }
+```
+3. 通过 `PUT /api/roles/:id/permissions` 把该权限授权给目标角色
+4. 在派生项目的新业务接口上使用 `@RequirePermissions('invoice:read')`
+5. 前端通过 `/api/permissions/me` 决定菜单、按钮或页面的显示状态
+
+### 6.3 创建客户角色并授权示例
+以 `FinanceManager` 为例，推荐流程：
+
+1. 通过 `POST /api/roles` 创建角色
+2. 通过 `PUT /api/roles/:id/permissions` 覆盖式分配权限集合
+3. 通过 `PUT /api/users/:id/roles` 给用户分配该角色
+4. 让用户重新获取 token / 登录，以确保权限上下文更新
+
+### 6.4 新模块接入授权示例
+派生项目新增业务模块时，推荐直接复用现有鉴权链路：
+
+- 仅要求登录：挂 `JwtAuthGuard`
+- 要求特定角色：配合 `AccessGuard` + `@RequireRoles(...)`
+- 要求细粒度权限点：配合 `AccessGuard` + `@RequirePermissions(...)`
+
+推荐引用文件：
+- `src/auth/access.decorator.ts`
+- `src/auth/access.guard.ts`
+- `src/users/users.controller.ts`
+- `src/roles/roles.controller.ts`
+- `src/permissions/permissions.controller.ts`
+
+---
+
+## 7. 权限扩展指南
+
+### 7.1 权限 key 命名约定
+推荐统一使用 `resource:action`，例如：
+- `invoice:read`
+- `invoice:create`
+- `invoice:approve`
+
+建议：
+- `resource` 表示业务域或资源类型
+- `action` 表示允许的操作
+- 不要直接把页面名、按钮文案作为权限 key
+
+### 7.2 group 分组建议
+`group` 用于权限聚合展示与检索，推荐按业务域分组，例如：
+- `user`
+- `role`
+- `permission`
+- `invoice`
+- `project`
+
+### 7.3 权限扩展时的 source of truth
+优先参考以下实现：
+- `src/permissions/entities/permission.entity.ts`
+- `src/permissions/permissions.service.ts`
+- `src/seed.ts`
+- `src/auth/access.decorator.ts`
+- `src/auth/access.guard.ts`
+
+### 7.4 权限扩展注意事项
+- 当前系统已具备权限点路由控制能力，不只是“权限查询接口”
+- 当前控制器示例更多使用 `@RequireRoles('SuperAdmin')`，但派生项目可直接启用 `@RequirePermissions(...)`
+- 系统内置权限更适合作为底模稳定面；客户业务权限建议新增而不是直接破坏系统权限语义
+
+---
+
+## 8. 角色授权指南
+
+### 8.1 角色设计原则
+- 角色应表达职责边界，而不是临时页面或菜单组合
+- `SuperAdmin` 更适合作为平台维护角色，不宜直接充当所有业务用户角色
+- 客户项目应围绕业务职责扩展角色，例如财务、审核、运营、客服等
+
+### 8.2 授权链路
+当前推荐的授权链路为：
+1. 创建权限
+2. 创建角色
+3. 给角色分配权限
+4. 给用户分配角色
+5. 用户重新获取最新登录态
+
+### 8.3 覆盖式授权的含义
+- `PUT /api/roles/:id/permissions` 为覆盖式授权，不是追加式授权
+- `PUT /api/users/:id/roles` 为覆盖式分配，不是增量追加
+- 派生项目接入时应明确这一行为，避免误以为旧授权会自动保留
+
+### 8.4 推荐参考实现
+- `src/roles/roles.service.ts`
+- `src/users/users.service.ts`
+- `src/seed.ts`
+
+---
+
+## 9. 二次开发建议
+
+### 9.1 建议优先保留
+- User / Role / Permission / UserRole / RolePermission 核心模型
+- JWT + Guard + Decorator 的鉴权链路
+- 统一响应结构与异常处理模式
+
+### 9.2 建议按项目扩展
+- 业务权限点
+- 客户角色体系
+- 新业务模块接口
+- seed 初始化内容
+- 前端接入实现
+
+### 9.3 建议谨慎改动
+- `SuperAdmin` 与系统级权限的语义
+- token 结构与认证主流程
+- 当前底模中的基础鉴权/授权方式
+- 开发态与交付态的数据库策略边界
+
+---
+
+## 10. 备注
+
+- 当前管理接口统一要求 JWT，且底层已具备基于角色与权限点的路由级访问控制能力
 - JWT 策略当前从 `Authorization: Bearer <token>` 读取 Access Token
-- Demo 页面使用本接口时，前端请求基址当前写死为 `http://localhost:3000`
+- Demo 页面使用本接口时，当前通过相对 `/api/...` 路径请求后端
+- Demo 更适合作为联调和前端集成参考，而不是直接交付给客户的正式前端

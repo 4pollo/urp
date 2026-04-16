@@ -158,6 +158,53 @@ npm run start:prod
 | 4006 | 403 | 无权限 |
 | 5000 | 5xx | 服务端错误 |
 
+## 底模定位与适用边界
+
+URP 当前定位为 **RBAC 权限系统底模**，适合在客户项目中继续派生开发，而不是直接作为最终交付系统上线。
+
+推荐用途：
+- 作为新项目的认证与权限基础设施
+- 作为客户项目的用户 / 角色 / 权限中心原型
+- 作为前后端联调、权限模型验证和接口模板
+
+边界说明：
+- 当前已具备完整的 JWT + RBAC 主链路，可直接复用认证、角色授权、权限聚合和管理接口
+- `public/demo/` 仅用于接口联调与能力演示，不应视为生产级前端
+- 底模阶段可优先保留当前开发效率优先的配置；正式交付项目再按需要收口 migration、监控、审计、多租户等能力
+
+## 派生项目开发者阅读路径
+
+如果你是基于此仓库继续开发客户项目，建议按下面顺序阅读：
+
+1. **README**：理解底模定位、启动方式和文档入口
+2. **[docs/API.md](docs/API.md)**：查看接口、典型接入流程、权限扩展与角色授权方式
+3. **[docs/DEMO.md](docs/DEMO.md)**：参考前端如何登录、存 token、获取用户与权限
+4. **[docs/PRD.md](docs/PRD.md)**：理解底模边界、常见定制维度与演进方向
+5. **代码实现**：以 `src/auth/*`、`src/users/*`、`src/roles/*`、`src/permissions/*`、`src/seed.ts` 为最终 source of truth
+
+## 常见派生场景与改造入口
+
+### 1. 新增业务权限点
+- 在 `src/permissions/entities/permission.entity.ts` 延续当前 `resource:action` 命名约定
+- 通过 `src/seed.ts` 或管理接口初始化权限数据
+- 通过 `PUT /api/roles/:id/permissions` 将权限授权给角色
+- 在新业务接口上使用 `@RequirePermissions(...)` 接入权限点保护
+
+### 2. 新增客户角色体系
+- 保留系统级 `SuperAdmin` 作为平台维护角色
+- 按客户职责扩展业务角色，如财务、审核、运营等
+- 通过 `PUT /api/users/:id/roles` 给用户分配角色
+
+### 3. 给新业务模块接入鉴权
+- 登录态校验复用 `JwtAuthGuard`
+- 角色/权限控制复用 `AccessGuard`
+- 控制器或方法级使用 `@RequireRoles(...)` / `@RequirePermissions(...)`
+
+### 4. 前端接入
+- 可参考 `public/demo/shared.js`、`dashboard.html`、`admin.html`
+- 推荐复用其登录、携带 token、获取当前用户与权限的流程
+- 不建议直接把 demo 页面作为客户项目管理台交付
+
 ## Demo 页面
 
 启动服务后可访问：
@@ -171,8 +218,9 @@ npm run start:prod
 
 说明：
 - Demo 页面由 Nest 静态托管，资源目录为 `public/`
-- Demo 页面中的前端请求当前写死为 `http://localhost:3000/api/...`
-- 管理面板页面本身是静态资源，页面加载后通过接口判断当前用户是否为 `SuperAdmin`
+- Demo 页面当前通过相对 `/api/...` 路径请求后端，可随服务端口一同工作
+- 管理面板页面本身是静态资源，页面加载后仍通过接口判断当前用户是否为 `SuperAdmin`
+- 这些页面的定位是“联调样例 + 集成参考”，而不是生产前端
 
 详见 [docs/DEMO.md](docs/DEMO.md)
 
@@ -214,8 +262,9 @@ public/
 ## 当前实现说明
 
 - 当前 users / roles / permissions 管理接口都要求 JWT
-- 当前项目提供权限查询能力，但尚未在控制器层实现基于权限点的路由拦截
-- Refresh Token 当前用于换发新的 Access Token，但未实现持久化、吊销与轮换机制
+- 当前项目已具备基于角色和权限点的路由级访问控制能力：`AccessGuard` 可配合 `@RequireRoles(...)` 与 `@RequirePermissions(...)` 使用
+- 当前控制器示例主要以 `SuperAdmin` 角色控制为主；派生项目中可按业务模块进一步使用权限点保护
+- Refresh Token 已具备生命周期控制与单会话轮换策略，修改密码后旧 refresh token 会失效
 
 ## 许可证
 
