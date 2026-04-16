@@ -268,4 +268,4 @@ public/
 
 ## 许可证
 
-UNLICENSED
+MIT license
