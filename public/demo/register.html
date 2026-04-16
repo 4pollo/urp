@@ -508,6 +508,7 @@
         </div>
     </div>
 
+    <script src="/demo/shared.js"></script>
     <script>
         const form = document.getElementById('registerForm');
         const submitBtn = document.getElementById('submitBtn');
@@ -520,15 +521,15 @@
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
 
-            messageDiv.innerHTML = '';
+            clearMessage(messageDiv);
 
             if (password !== confirmPassword) {
-                messageDiv.innerHTML = '<div class="error">两次输入的密码不一致</div>';
+                setMessage(messageDiv, 'error', '两次输入的密码不一致');
                 return;
             }
 
             if (password.length < 6) {
-                messageDiv.innerHTML = '<div class="error">密码长度至少为 6 位</div>';
+                setMessage(messageDiv, 'error', '密码长度至少为 6 位');
                 return;
             }
 
@@ -536,33 +537,29 @@
             submitBtn.textContent = '注册中...';
 
             try {
-                const response = await fetch('http://localhost:3000/api/auth/register', {
+                const result = await apiRequest('/api/auth/register', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    auth: false,
                     body: JSON.stringify({ email, password }),
                 });
-
-                const result = await response.json();
 
                 if (result.code === 0) {
                     localStorage.setItem('accessToken', result.data.accessToken);
                     localStorage.setItem('refreshToken', result.data.refreshToken);
                     localStorage.setItem('user', JSON.stringify(result.data.user));
 
-                    messageDiv.innerHTML = '<div class="success">注册成功！正在跳转...</div>';
+                    setMessage(messageDiv, 'success', '注册成功！正在跳转...');
 
                     setTimeout(() => {
                         window.location.href = '/demo/dashboard.html';
                     }, 1000);
-                } else {
-                    messageDiv.innerHTML = `<div class="error">${result.message || '注册失败，请稍后重试'}</div>`;
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = '注册';
+                    return;
                 }
+
+                setMessage(messageDiv, 'error', result.message || '注册失败，请稍后重试');
             } catch (error) {
-                messageDiv.innerHTML = '<div class="error">网络错误，请稍后重试</div>';
+                setMessage(messageDiv, 'error', '网络错误，请稍后重试');
+            } finally {
                 submitBtn.disabled = false;
                 submitBtn.textContent = '注册';
             }

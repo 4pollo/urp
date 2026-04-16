@@ -317,55 +317,70 @@
         </div>
     </div>
 
+    <script src="/demo/shared.js"></script>
     <script>
-        // 检查登录状态
-        const token = localStorage.getItem('accessToken');
-        if (!token) {
-            window.location.href = '/demo/login.html';
+        const token = requireAuth();
+
+        function renderRoles(roles) {
+            const rolesContainer = document.getElementById('rolesContainer');
+            rolesContainer.replaceChildren();
+
+            if (!roles || roles.length === 0) {
+                const emptyState = document.createElement('div');
+                emptyState.className = 'empty-state';
+                emptyState.textContent = '暂无角色';
+                rolesContainer.appendChild(emptyState);
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+            roles.forEach((role) => {
+                fragment.appendChild(createBadge(role.name));
+            });
+            rolesContainer.appendChild(fragment);
+
+            if (roles.some((role) => role.name === 'SuperAdmin')) {
+                document.getElementById('adminLink').style.display = 'block';
+            }
+        }
+
+        function renderPermissions(permissions) {
+            const permissionsContainer = document.getElementById('permissionsContainer');
+            permissionsContainer.replaceChildren();
+
+            if (!permissions || permissions.length === 0) {
+                const emptyState = document.createElement('div');
+                emptyState.className = 'empty-state';
+                emptyState.textContent = '暂无权限';
+                permissionsContainer.appendChild(emptyState);
+                return;
+            }
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'permission-list';
+            permissions.forEach((permission) => {
+                const item = document.createElement('div');
+                item.className = 'permission-item';
+                item.textContent = permission;
+                wrapper.appendChild(item);
+            });
+            permissionsContainer.appendChild(wrapper);
         }
 
         async function fetchUserInfo() {
-            try {
-                const response = await fetch('http://localhost:3000/api/auth/me', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
+            if (!token) return;
 
-                const result = await response.json();
+            try {
+                const result = await apiRequest('/api/auth/me');
 
                 if (result.code === 0) {
                     const user = result.data;
-
                     document.getElementById('userEmail').textContent = user.email;
                     document.getElementById('userStatus').textContent = user.status === 'active' ? '正常' : '冻结';
-
-                    if (user.lastLoginAt) {
-                        const date = new Date(user.lastLoginAt);
-                        document.getElementById('lastLogin').textContent = date.toLocaleString('zh-CN');
-                    } else {
-                        document.getElementById('lastLogin').textContent = '首次登录';
-                    }
-
-                    // 显示角色
-                    const rolesContainer = document.getElementById('rolesContainer');
-                    if (user.roles && user.roles.length > 0) {
-                        rolesContainer.innerHTML = user.roles.map(role =>
-                            `<span class="badge">${role.name}</span>`
-                        ).join('');
-
-                        // 如果有 SuperAdmin 角色，显示管理面板链接
-                        if (user.roles.some(r => r.name === 'SuperAdmin')) {
-                            document.getElementById('adminLink').style.display = 'block';
-                        }
-                    } else {
-                        rolesContainer.innerHTML = '<div class="empty-state">暂无角色</div>';
-                    }
-                } else {
-                    if (result.code === 4001) {
-                        localStorage.clear();
-                        window.location.href = '/demo/login.html';
-                    }
+                    document.getElementById('lastLogin').textContent = user.lastLoginAt
+                        ? new Date(user.lastLoginAt).toLocaleString('zh-CN')
+                        : '首次登录';
+                    renderRoles(user.roles);
                 }
             } catch (error) {
                 console.error('获取用户信息失败:', error);
@@ -373,29 +388,12 @@
         }
 
         async function fetchPermissions() {
+            if (!token) return;
+
             try {
-                const response = await fetch('http://localhost:3000/api/permissions/me', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                const result = await response.json();
-
+                const result = await apiRequest('/api/permissions/me');
                 if (result.code === 0) {
-                    const permissionsContainer = document.getElementById('permissionsContainer');
-
-                    if (result.data.permissions && result.data.permissions.length > 0) {
-                        permissionsContainer.innerHTML = `
-                            <div class="permission-list">
-                                ${result.data.permissions.map(perm =>
-                                    `<div class="permission-item">${perm}</div>`
-                                ).join('')}
-                            </div>
-                        `;
-                    } else {
-                        permissionsContainer.innerHTML = '<div class="empty-state">暂无权限</div>';
-                    }
+                    renderPermissions(result.data.permissions || []);
                 }
             } catch (error) {
                 console.error('获取权限失败:', error);
@@ -403,11 +401,9 @@
         }
 
         function logout() {
-            localStorage.clear();
-            window.location.href = '/demo/login.html';
+            redirectToLogin();
         }
 
-        // 加载数据
         fetchUserInfo();
         fetchPermissions();
     </script>

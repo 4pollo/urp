@@ -488,6 +488,7 @@
         </div>
     </div>
 
+    <script src="/demo/shared.js"></script>
     <script>
         const form = document.getElementById('loginForm');
         const submitBtn = document.getElementById('submitBtn');
@@ -501,36 +502,32 @@
 
             submitBtn.disabled = true;
             submitBtn.textContent = '登录中...';
-            messageDiv.innerHTML = '';
+            clearMessage(messageDiv);
 
             try {
-                const response = await fetch('http://localhost:3000/api/auth/login', {
+                const result = await apiRequest('/api/auth/login', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    auth: false,
                     body: JSON.stringify({ email, password }),
                 });
-
-                const result = await response.json();
 
                 if (result.code === 0) {
                     localStorage.setItem('accessToken', result.data.accessToken);
                     localStorage.setItem('refreshToken', result.data.refreshToken);
                     localStorage.setItem('user', JSON.stringify(result.data.user));
 
-                    messageDiv.innerHTML = '<div class="success">登录成功！正在跳转...</div>';
+                    setMessage(messageDiv, 'success', '登录成功！正在跳转...');
 
                     setTimeout(() => {
                         window.location.href = '/demo/dashboard.html';
                     }, 1000);
-                } else {
-                    messageDiv.innerHTML = `<div class="error">${result.message || '登录失败，请检查邮箱和密码'}</div>`;
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = '登录';
+                    return;
                 }
+
+                setMessage(messageDiv, 'error', result.message || '登录失败，请检查邮箱和密码');
             } catch (error) {
-                messageDiv.innerHTML = '<div class="error">网络错误，请稍后重试</div>';
+                setMessage(messageDiv, 'error', '网络错误，请稍后重试');
+            } finally {
                 submitBtn.disabled = false;
                 submitBtn.textContent = '登录';
             }
