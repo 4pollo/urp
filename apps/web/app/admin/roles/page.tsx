@@ -1,6 +1,6 @@
 'use client';
 
-import { ShieldCheck } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -15,7 +15,7 @@ import { ConfirmDialog } from '../../../components/admin/confirm-dialog';
 import { RoleEditDialog } from '../../../components/admin/role-edit-dialog';
 import { RolesTable } from '../../../components/admin/roles-table';
 import { AppShell } from '../../../components/layout/app-shell';
-import { Badge } from '../../../components/ui/badge';
+import { Button } from '../../../components/ui/button';
 import { useAdminData } from '../../../hooks/use-admin-data';
 import { useMyPermissions } from '../../../hooks/use-my-permissions';
 import { apiRequest } from '../../../lib/fetcher';
@@ -46,6 +46,8 @@ export default function AdminRolesPage() {
     authenticated && canAccess && !permissionLoading,
     { roles: true, permissions: true },
   );
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createPending, setCreatePending] = useState(false);
   const [selectedRole, setSelectedRole] = useState<RoleListItem | null>(null);
   const [selectedRoleDetail, setSelectedRoleDetail] =
     useState<RoleDetail | null>(null);
@@ -81,13 +83,15 @@ export default function AdminRolesPage() {
     router,
   ]);
 
+  const currentPage = roles?.page || 1;
+  const currentLimit = roles?.limit || 10;
   const totals = useMemo(
     () => ({
       totalUsers: 0,
-      totalRoles: roles.length,
-      totalPermissions: permissions.length,
+      totalRoles: roles?.total || 0,
+      totalPermissions: permissions?.total || 0,
     }),
-    [permissions.length, roles.length],
+    [permissions?.total, roles?.total],
   );
 
   async function handleRoleEdit(role: RoleListItem) {
@@ -127,12 +131,38 @@ export default function AdminRolesPage() {
       setConfirmOpen(false);
       setSelectedRole(null);
       setSelectedRoleDetail(null);
-      await reload();
+      const nextPage =
+        roles && roles.items.length === 1 && currentPage > 1
+          ? currentPage - 1
+          : currentPage;
+      await reload(nextPage, currentLimit);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '删除失败');
     } finally {
       setDeletePending(false);
       setPendingRoleId(null);
+    }
+  }
+
+  async function handleCreateRole(payload: {
+    name: string;
+    description: string;
+  }) {
+    if (createPending) return;
+
+    setCreatePending(true);
+    try {
+      await apiRequest('/api/roles', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      toast.success('角色创建成功');
+      setCreateOpen(false);
+      await reload(currentPage, currentLimit);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '创建失败');
+    } finally {
+      setCreatePending(false);
     }
   }
 
@@ -159,7 +189,7 @@ export default function AdminRolesPage() {
       toast.success('角色更新成功');
       setSelectedRole(null);
       setSelectedRoleDetail(null);
-      await reload();
+      await reload(currentPage, currentLimit);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '更新失败');
     } finally {
@@ -182,7 +212,7 @@ export default function AdminRolesPage() {
         current
           ? {
               ...current,
-              permissions: permissions.filter((permission) =>
+              permissions: (permissions?.items || []).filter((permission) =>
                 permissionIds.includes(permission.id),
               ),
             }
@@ -191,7 +221,7 @@ export default function AdminRolesPage() {
       toast.success('角色权限更新成功');
       setSelectedRole(null);
       setSelectedRoleDetail(null);
-      await reload();
+      await reload(currentPage, currentLimit);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '更新失败');
     } finally {
@@ -265,10 +295,12 @@ export default function AdminRolesPage() {
               管理角色定义与角色权限分配
             </p>
           </div>
-          <Badge variant="outline" className="gap-1.5 px-3 py-2">
-            <ShieldCheck className="h-3.5 w-3.5" />
-            {totals.totalRoles} 角色 / {totals.totalPermissions} 权限
-          </Badge>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button onClick={() => setCreateOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              新增角色
+            </Button>
+          </div>
         </div>
 
         {error ? (
@@ -278,17 +310,23 @@ export default function AdminRolesPage() {
             detail={error}
             actionLabel="重试"
             onAction={() => {
-              void reload();
+              void reload(currentPage, currentLimit);
             }}
           />
         ) : null}
 
         <AdminStats {...totals} />
 
-        {roles.length ? (
+        {roles?.items.length ? (
           <RolesTable
-            roles={roles}
+            roles={roles.items}
+            page={roles.page}
+            total={roles.total}
+            limit={roles.limit}
             pendingRoleId={pendingRoleId}
+            onPageChange={(page) => {
+              void reload(page, currentLimit);
+            }}
             onEdit={(role) => {
               void handleRoleEdit(role);
             }}
@@ -328,10 +366,25 @@ export default function AdminRolesPage() {
         />
 
         <RoleEditDialog
+          role={null}
+          roleDetail={null}
+          permissions={permissions?.items || []}
+          open={createOpen}
+          mode="create"
+          pending={createPending}
+          onOpenChange={setCreateOpen}
+          onSubmit={(payload) => {
+            void handleCreateRole(payload);
+          }}
+          onPermissionsSubmit={() => undefined}
+        />
+
+        <RoleEditDialog
           role={selectedRole}
           roleDetail={selectedRoleDetail}
-          permissions={permissions}
+          permissions={permissions?.items || []}
           open={Boolean(selectedRole) && !confirmOpen}
+          mode="edit"
           detailLoading={roleDetailLoading}
           pending={roleSubmitPending}
           permissionPending={rolePermissionsSubmitPending}

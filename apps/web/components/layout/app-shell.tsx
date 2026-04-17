@@ -179,7 +179,7 @@ export function AppShell({
           </div>
         </header>
         <main className="min-h-0 flex-1 overflow-y-auto">
-          <div className="px-6 py-10 lg:px-8 lg:py-16">{children}</div>
+          <div className="px-6 py-8 lg:px-8 lg:py-10">{children}</div>
         </main>
       </div>
     </div>

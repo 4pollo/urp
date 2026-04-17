@@ -19,12 +19,14 @@ import { Textarea } from '../ui/textarea';
 export function PermissionEditDialog({
   permission,
   open,
+  mode = 'edit',
   pending = false,
   onOpenChange,
   onSubmit,
 }: {
   permission: PermissionItem | null;
   open: boolean;
+  mode?: 'create' | 'edit';
   pending?: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (payload: {
@@ -36,6 +38,7 @@ export function PermissionEditDialog({
   const [key, setKey] = useState('');
   const [group, setGroup] = useState('');
   const [description, setDescription] = useState('');
+  const isCreateMode = mode === 'create';
 
   useEffect(() => {
     setKey(permission?.key || '');
@@ -66,13 +69,17 @@ export function PermissionEditDialog({
     >
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>编辑权限</DialogTitle>
-          <DialogDescription>修改权限标识、分组与描述。</DialogDescription>
+          <DialogTitle>{isCreateMode ? '新增权限' : '编辑权限'}</DialogTitle>
+          <DialogDescription>
+            {isCreateMode
+              ? '填写新的权限标识、分组与描述。'
+              : '修改权限标识、分组与描述。'}
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <Card>
             <CardHeader>
-              <CardTitle>权限信息</CardTitle>
+              <CardTitle>{isCreateMode ? '新权限信息' : '权限信息'}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-5">
               <div className="grid gap-5 sm:grid-cols-2">
@@ -122,7 +129,13 @@ export function PermissionEditDialog({
               type="submit"
               disabled={pending || !key.trim() || !group.trim()}
             >
-              {pending ? '保存中...' : '保存'}
+              {pending
+                ? isCreateMode
+                  ? '创建中...'
+                  : '保存中...'
+                : isCreateMode
+                  ? '创建权限'
+                  : '保存'}
             </Button>
           </DialogFooter>
         </form>

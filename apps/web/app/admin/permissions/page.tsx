@@ -1,6 +1,6 @@
 'use client';
 
-import { ShieldCheck } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -15,7 +15,7 @@ import { ConfirmDialog } from '../../../components/admin/confirm-dialog';
 import { PermissionEditDialog } from '../../../components/admin/permission-edit-dialog';
 import { PermissionsTable } from '../../../components/admin/permissions-table';
 import { AppShell } from '../../../components/layout/app-shell';
-import { Badge } from '../../../components/ui/badge';
+import { Button } from '../../../components/ui/button';
 import { useAdminData } from '../../../hooks/use-admin-data';
 import { useMyPermissions } from '../../../hooks/use-my-permissions';
 import { apiRequest } from '../../../lib/fetcher';
@@ -45,6 +45,8 @@ export default function AdminPermissionsPage() {
     authenticated && canAccess && !permissionLoading,
     { permissions: true },
   );
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createPending, setCreatePending] = useState(false);
   const [selectedPermission, setSelectedPermission] =
     useState<PermissionItem | null>(null);
   const [pendingPermissionId, setPendingPermissionId] = useState<number | null>(
@@ -78,13 +80,15 @@ export default function AdminPermissionsPage() {
     router,
   ]);
 
+  const currentPage = permissions?.page || 1;
+  const currentLimit = permissions?.limit || 10;
   const totals = useMemo(
     () => ({
       totalUsers: 0,
       totalRoles: 0,
-      totalPermissions: permissions.length,
+      totalPermissions: permissions?.total || 0,
     }),
-    [permissions.length],
+    [permissions?.total],
   );
 
   async function handleDeleteConfirmed() {
@@ -102,12 +106,39 @@ export default function AdminPermissionsPage() {
       toast.success('权限删除成功');
       setConfirmOpen(false);
       setSelectedPermission(null);
-      await reload();
+      const nextPage =
+        permissions && permissions.items.length === 1 && currentPage > 1
+          ? currentPage - 1
+          : currentPage;
+      await reload(nextPage, currentLimit);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '删除失败');
     } finally {
       setDeletePending(false);
       setPendingPermissionId(null);
+    }
+  }
+
+  async function handleCreatePermission(payload: {
+    key: string;
+    group: string;
+    description: string;
+  }) {
+    if (createPending) return;
+
+    setCreatePending(true);
+    try {
+      await apiRequest('/api/permissions', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      toast.success('权限创建成功');
+      setCreateOpen(false);
+      await reload(currentPage, currentLimit);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '创建失败');
+    } finally {
+      setCreatePending(false);
     }
   }
 
@@ -127,7 +158,7 @@ export default function AdminPermissionsPage() {
       });
       setSelectedPermission(null);
       toast.success('权限更新成功');
-      await reload();
+      await reload(currentPage, currentLimit);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '更新失败');
     } finally {
@@ -201,10 +232,12 @@ export default function AdminPermissionsPage() {
               管理权限标识、分组与描述
             </p>
           </div>
-          <Badge variant="outline" className="gap-1.5 px-3 py-2">
-            <ShieldCheck className="h-3.5 w-3.5" />
-            {totals.totalPermissions} 权限
-          </Badge>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button onClick={() => setCreateOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              新增权限
+            </Button>
+          </div>
         </div>
 
         {error ? (
@@ -214,17 +247,23 @@ export default function AdminPermissionsPage() {
             detail={error}
             actionLabel="重试"
             onAction={() => {
-              void reload();
+              void reload(currentPage, currentLimit);
             }}
           />
         ) : null}
 
         <AdminStats {...totals} />
 
-        {permissions.length ? (
+        {permissions?.items.length ? (
           <PermissionsTable
-            permissions={permissions}
+            permissions={permissions.items}
+            page={permissions.page}
+            total={permissions.total}
+            limit={permissions.limit}
             pendingPermissionId={pendingPermissionId}
+            onPageChange={(page) => {
+              void reload(page, currentLimit);
+            }}
             onEdit={(permission) => {
               if (pendingPermissionId !== null) {
                 return;
@@ -265,8 +304,20 @@ export default function AdminPermissionsPage() {
         />
 
         <PermissionEditDialog
+          permission={null}
+          open={createOpen}
+          mode="create"
+          pending={createPending}
+          onOpenChange={setCreateOpen}
+          onSubmit={(payload) => {
+            void handleCreatePermission(payload);
+          }}
+        />
+
+        <PermissionEditDialog
           permission={selectedPermission}
           open={Boolean(selectedPermission) && !confirmOpen}
+          mode="edit"
           pending={permissionSubmitPending}
           onOpenChange={(open) => {
             if (!open) {

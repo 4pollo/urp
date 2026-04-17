@@ -60,6 +60,13 @@ export type RoleListItem = {
   createdAt: string;
 };
 
+export type RoleListResponse = {
+  items: RoleListItem[];
+  total: number;
+  page: number;
+  limit: number;
+};
+
 export type RoleDetail = {
   id: number;
   name: string;
@@ -76,4 +83,11 @@ export type PermissionItem = {
   group: string;
   description: string;
   createdAt?: string;
+};
+
+export type PermissionListResponse = {
+  items: PermissionItem[];
+  total: number;
+  page: number;
+  limit: number;
 };

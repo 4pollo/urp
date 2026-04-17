@@ -4,9 +4,45 @@ import { useCallback, useEffect, useState } from 'react';
 import { apiRequest } from '../lib/fetcher';
 import type {
   PermissionItem,
+  PermissionListResponse,
   RoleListItem,
+  RoleListResponse,
   UserListResponse,
 } from '../lib/types';
+
+function normalizeRolesResponse(
+  data: RoleListResponse | RoleListItem[],
+  page: number,
+  limit: number,
+): RoleListResponse {
+  if (Array.isArray(data)) {
+    return {
+      items: data,
+      total: data.length,
+      page,
+      limit,
+    };
+  }
+
+  return data;
+}
+
+function normalizePermissionsResponse(
+  data: PermissionListResponse | PermissionItem[],
+  page: number,
+  limit: number,
+): PermissionListResponse {
+  if (Array.isArray(data)) {
+    return {
+      items: data,
+      total: data.length,
+      page,
+      limit,
+    };
+  }
+
+  return data;
+}
 
 export function useAdminData(
   enabled = true,
@@ -26,8 +62,10 @@ export function useAdminData(
     permissions: includePermissions = true,
   } = sections;
   const [users, setUsers] = useState<UserListResponse | null>(null);
-  const [roles, setRoles] = useState<RoleListItem[]>([]);
-  const [permissions, setPermissions] = useState<PermissionItem[]>([]);
+  const [roles, setRoles] = useState<RoleListResponse | null>(null);
+  const [permissions, setPermissions] = useState<PermissionListResponse | null>(
+    null,
+  );
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,8 +73,8 @@ export function useAdminData(
     async (page = 1, limit = 10) => {
       if (!enabled) {
         setUsers(null);
-        setRoles([]);
-        setPermissions([]);
+        setRoles(null);
+        setPermissions(null);
         setError(null);
         setLoading(false);
         return;
@@ -62,29 +100,35 @@ export function useAdminData(
 
         if (includeRoles) {
           requests.push(
-            apiRequest<RoleListItem[]>('/api/roles').then((result) => {
-              setRoles(result.data);
+            apiRequest<RoleListResponse | RoleListItem[]>(
+              `/api/roles?page=${page}&limit=${limit}`,
+            ).then((result) => {
+              setRoles(normalizeRolesResponse(result.data, page, limit));
             }),
           );
         } else {
-          setRoles([]);
+          setRoles(null);
         }
 
         if (includePermissions) {
           requests.push(
-            apiRequest<PermissionItem[]>('/api/permissions').then((result) => {
-              setPermissions(result.data);
+            apiRequest<PermissionListResponse | PermissionItem[]>(
+              `/api/permissions?page=${page}&limit=${limit}`,
+            ).then((result) => {
+              setPermissions(
+                normalizePermissionsResponse(result.data, page, limit),
+              );
             }),
           );
         } else {
-          setPermissions([]);
+          setPermissions(null);
         }
 
         await Promise.all(requests);
       } catch (err) {
         setUsers(null);
-        setRoles([]);
-        setPermissions([]);
+        setRoles(null);
+        setPermissions(null);
         setError(err instanceof Error ? err.message : '加载管理数据失败');
       } finally {
         setLoading(false);
