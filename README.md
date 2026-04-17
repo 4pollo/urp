@@ -1,6 +1,27 @@
 # URP - 用户-角色-权限管理系统
 
+> [!IMPORTANT]
+> 当前仓库已进入拆仓迁移阶段。
+> - API 独立仓库（本地）：`/Users/ldx/CodeX/urp-api`
+> - Web 独立仓库（本地）：`/Users/ldx/CodeX/urp-web`
+> - 新功能开发应优先在独立仓库中继续进行
+> - 当前仓库保留为迁移参考与过渡中转，不再建议作为前后端日常主开发仓库
+
 基于 NestJS 构建的通用 RBAC 权限管理服务，提供标准 RESTful API，并附带静态 Demo 页面用于演示认证与权限管理流程。
+
+## 仓库迁移状态
+
+当前状态：
+- `apps/api` 已拆分为独立仓库：`/Users/ldx/CodeX/urp-api`
+- `apps/web` 已拆分为独立仓库：`/Users/ldx/CodeX/urp-web`
+- 本仓库仍保留原始 monorepo 结构，便于迁移期对照、补文档与回放历史
+
+建议使用方式：
+- 开发 API：进入 `urp-api`
+- 开发 Web：进入 `urp-web`
+- 仅在需要查看旧路径、对照迁移前结构或处理中转事务时再回到当前仓库
+
+---
 
 ## 特性
 
@@ -76,6 +97,9 @@ npm run seed
 - 密码：`admin123`
 
 ### 5. 启动服务
+
+> 说明：以下命令仅适用于当前过渡期 monorepo。拆分后的长期开发请分别在 `urp-api` 与 `urp-web` 仓库中执行各自命令。
+
 
 ```bash
 # 启动 API（NestJS）
