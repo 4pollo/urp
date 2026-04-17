@@ -23,6 +23,19 @@ export type MyPermissions = {
   permissions: string[];
 };
 
+export type AdminSection = {
+  href: '/admin/users' | '/admin/roles' | '/admin/permissions';
+  label: string;
+  permission: 'user:read' | 'role:read' | 'permission:read';
+};
+
+export type AuthNavItem =
+  | {
+      href: '/dashboard';
+      label: string;
+    }
+  | AdminSection;
+
 export type UserListItem = {
   id: number;
   email: string;

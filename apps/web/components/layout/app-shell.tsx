@@ -1,65 +1,156 @@
 'use client';
 
 import Link from 'next/link';
-import { Moon, Sun } from 'lucide-react';
+import {
+  Gauge,
+  KeyRound,
+  Moon,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Shield,
+  Sun,
+  Users,
+} from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
+
+const SIDEBAR_COLLAPSED_STORAGE_KEY = 'app-shell:sidebar-collapsed';
+import type { AuthNavItem } from '../../lib/types';
 import { Button } from '../ui/button';
 import { cn } from '../../lib/utils';
 import { destroySession } from '../../lib/session';
-
-const links = [
-  { href: '/dashboard', label: '用户面板' },
-  { href: '/admin', label: '管理面板' },
-];
+import { ScrollArea } from '../ui/scroll-area';
 
 export function AppShell({
   children,
-  showAdmin,
+  navItems = [],
 }: {
   children: ReactNode;
-  showAdmin: boolean;
+  navItems?: AuthNavItem[];
 }) {
   const pathname = usePathname();
   const router = useRouter();
   const { resolvedTheme, setTheme, theme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    const storedValue = window.localStorage.getItem(
+      SIDEBAR_COLLAPSED_STORAGE_KEY,
+    );
+    setSidebarCollapsed(storedValue === 'true');
   }, []);
 
-  const visibleLinks = showAdmin
-    ? links
-    : links.filter((item) => item.href !== '/admin');
+  useEffect(() => {
+    if (!mounted) {
+      return;
+    }
+
+    window.localStorage.setItem(
+      SIDEBAR_COLLAPSED_STORAGE_KEY,
+      String(sidebarCollapsed),
+    );
+  }, [mounted, sidebarCollapsed]);
+
   const activeTheme = mounted ? resolvedTheme || theme || 'light' : 'light';
 
+  const navIcons: Record<AuthNavItem['href'], ReactNode> = {
+    '/dashboard': <Gauge className="h-4 w-4 shrink-0" />,
+    '/admin/users': <Users className="h-4 w-4 shrink-0" />,
+    '/admin/roles': <Shield className="h-4 w-4 shrink-0" />,
+    '/admin/permissions': <KeyRound className="h-4 w-4 shrink-0" />,
+  };
+
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur-sm">
-        <div className="app-surface flex flex-col gap-4 px-6 py-5 lg:flex-row lg:items-center lg:justify-between lg:px-8">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-6">
-            <div className="font-['Syne'] text-2xl font-extrabold uppercase tracking-[-0.02em] text-foreground">
-              URP
-            </div>
-            <nav className="flex flex-wrap gap-2">
-              {visibleLinks.map((item) => (
+    <div
+      className={cn(
+        'h-screen overflow-hidden bg-background text-foreground lg:grid',
+        sidebarCollapsed
+          ? 'lg:grid-cols-[77px_minmax(0,1fr)]'
+          : 'lg:grid-cols-[220px_minmax(0,1fr)]',
+      )}
+    >
+      <aside className="flex h-screen flex-col overflow-hidden border-r border-border bg-card">
+        <div
+          className={cn(
+            'flex h-[77px] shrink-0 items-center border-b border-border py-5',
+            sidebarCollapsed ? 'justify-center px-3' : 'justify-between px-6',
+          )}
+        >
+          {sidebarCollapsed ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="展开侧边栏"
+              onClick={() => {
+                setSidebarCollapsed(false);
+              }}
+            >
+              <PanelLeftOpen className="h-4 w-4" />
+            </Button>
+          ) : (
+            <>
+              <div className="font-['Syne'] text-2xl font-extrabold uppercase tracking-[-0.02em] text-foreground">
+                URP
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="折叠侧边栏"
+                onClick={() => {
+                  setSidebarCollapsed(true);
+                }}
+              >
+                <PanelLeftClose className="h-4 w-4" />
+              </Button>
+            </>
+          )}
+        </div>
+        <ScrollArea className="flex-1">
+          <nav className="flex flex-col gap-1 p-3">
+            {navItems.map((item) => {
+              const active =
+                pathname === item.href || pathname.startsWith(`${item.href}/`);
+
+              return (
                 <Button
                   key={item.href}
                   asChild
-                  variant={pathname === item.href ? 'default' : 'ghost'}
-                  size="sm"
+                  variant={active ? 'default' : 'ghost'}
                   className={cn(
-                    pathname !== item.href && 'text-muted-foreground',
+                    'rounded-none',
+                    sidebarCollapsed ? 'w-full px-0' : 'w-full justify-start',
+                    !active && 'text-muted-foreground',
                   )}
                 >
-                  <Link href={item.href}>{item.label}</Link>
+                  <Link
+                    href={item.href}
+                    aria-label={item.label}
+                    className={cn(
+                      'flex w-full items-center',
+                      sidebarCollapsed
+                        ? 'justify-center'
+                        : 'justify-start gap-3',
+                    )}
+                  >
+                    {navIcons[item.href]}
+                    {sidebarCollapsed ? null : (
+                      <span className="truncate">{item.label}</span>
+                    )}
+                  </Link>
                 </Button>
-              ))}
-            </nav>
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+              );
+            })}
+          </nav>
+        </ScrollArea>
+      </aside>
+      <div className="flex h-screen min-w-0 flex-col overflow-hidden">
+        <header className="flex h-[77px] shrink-0 items-center justify-end border-b border-border bg-background/95 px-6 py-5 backdrop-blur-sm lg:px-8">
+          <div className="flex items-center gap-3">
             <Button
               variant="outline"
               size="icon"
@@ -86,9 +177,11 @@ export function AppShell({
               退出登录
             </Button>
           </div>
-        </div>
-      </header>
-      <div className="app-surface px-6 py-10 lg:px-8 lg:py-16">{children}</div>
+        </header>
+        <main className="min-h-0 flex-1 overflow-y-auto">
+          <div className="px-6 py-10 lg:px-8 lg:py-16">{children}</div>
+        </main>
+      </div>
     </div>
   );
 }

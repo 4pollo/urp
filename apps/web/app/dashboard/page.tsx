@@ -15,7 +15,7 @@ import { AppShell } from '../../components/layout/app-shell';
 import { Badge } from '../../components/ui/badge';
 import { useCurrentUser } from '../../hooks/use-current-user';
 import { useMyPermissions } from '../../hooks/use-my-permissions';
-import { isSuperAdmin } from '../../lib/guards';
+import { getAuthenticatedNavItems } from '../../lib/guards';
 import { destroySession, hasSession } from '../../lib/session';
 
 export default function DashboardPage() {
@@ -43,7 +43,7 @@ export default function DashboardPage() {
 
   const loading = userLoading || permissionsLoading;
   const error = userError || permissionsError;
-  const showAdmin = isSuperAdmin(roles);
+  const navItems = getAuthenticatedNavItems(permissions, roles);
 
   const retry = useMemo(
     () => () => {
@@ -55,14 +55,14 @@ export default function DashboardPage() {
 
   if (!authenticated) {
     return (
-      <AppShell showAdmin={false}>
+      <AppShell navItems={[]}>
         <LoadingState label="正在跳转到登录页..." />
       </AppShell>
     );
   }
 
   return (
-    <AppShell showAdmin={showAdmin}>
+    <AppShell navItems={navItems}>
       <div className="mb-12 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h1 className="page-title">用户面板</h1>

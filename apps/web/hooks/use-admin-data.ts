@@ -8,14 +8,30 @@ import type {
   UserListResponse,
 } from '../lib/types';
 
-export function useAdminData(enabled = true) {
+export function useAdminData(
+  enabled = true,
+  sections: {
+    users?: boolean;
+    roles?: boolean;
+    permissions?: boolean;
+  } = {
+    users: true,
+    roles: true,
+    permissions: true,
+  },
+) {
+  const {
+    users: includeUsers = true,
+    roles: includeRoles = true,
+    permissions: includePermissions = true,
+  } = sections;
   const [users, setUsers] = useState<UserListResponse | null>(null);
   const [roles, setRoles] = useState<RoleListItem[]>([]);
   const [permissions, setPermissions] = useState<PermissionItem[]>([]);
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
 
-  const loadAll = useCallback(
+  const reload = useCallback(
     async (page = 1, limit = 10) => {
       if (!enabled) {
         setUsers(null);
@@ -28,16 +44,43 @@ export function useAdminData(enabled = true) {
 
       setLoading(true);
       setError(null);
-      try {
-        const [usersResult, rolesResult, permissionsResult] = await Promise.all([
-          apiRequest<UserListResponse>(`/api/users?page=${page}&limit=${limit}`),
-          apiRequest<RoleListItem[]>('/api/roles'),
-          apiRequest<PermissionItem[]>('/api/permissions'),
-        ]);
 
-        setUsers(usersResult.data);
-        setRoles(rolesResult.data);
-        setPermissions(permissionsResult.data);
+      try {
+        const requests: Promise<void>[] = [];
+
+        if (includeUsers) {
+          requests.push(
+            apiRequest<UserListResponse>(
+              `/api/users?page=${page}&limit=${limit}`,
+            ).then((result) => {
+              setUsers(result.data);
+            }),
+          );
+        } else {
+          setUsers(null);
+        }
+
+        if (includeRoles) {
+          requests.push(
+            apiRequest<RoleListItem[]>('/api/roles').then((result) => {
+              setRoles(result.data);
+            }),
+          );
+        } else {
+          setRoles([]);
+        }
+
+        if (includePermissions) {
+          requests.push(
+            apiRequest<PermissionItem[]>('/api/permissions').then((result) => {
+              setPermissions(result.data);
+            }),
+          );
+        } else {
+          setPermissions([]);
+        }
+
+        await Promise.all(requests);
       } catch (err) {
         setUsers(null);
         setRoles([]);
@@ -47,12 +90,12 @@ export function useAdminData(enabled = true) {
         setLoading(false);
       }
     },
-    [enabled],
+    [enabled, includePermissions, includeRoles, includeUsers],
   );
 
   useEffect(() => {
-    void loadAll();
-  }, [loadAll]);
+    void reload();
+  }, [reload]);
 
   return {
     users,
@@ -60,6 +103,6 @@ export function useAdminData(enabled = true) {
     permissions,
     loading,
     error,
-    reload: loadAll,
+    reload,
   };
 }
