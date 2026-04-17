@@ -4,21 +4,19 @@ import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
+import { toast } from 'sonner';
 import { useAuth } from '../../hooks/use-auth';
-import { AlertMessage } from '../common/alert-message';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 
 export function LoginForm() {
   const router = useRouter();
-  const { login, isSubmitting, error, setError } = useAuth();
-  const [success, setSuccess] = useState<string | null>(null);
+  const { login, setError, isSubmitting } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
-    setSuccess(null);
 
     const formData = new FormData(event.currentTarget);
     const emailValue = formData.get('email');
@@ -28,10 +26,10 @@ export function LoginForm() {
 
     try {
       await login(email, password);
-      setSuccess('登录成功，正在跳转...');
+      toast.success('登录成功，正在跳转...');
       router.replace('/dashboard');
-    } catch {
-      setSuccess(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '登录失败');
     }
   }
 
@@ -42,8 +40,6 @@ export function LoginForm() {
         void handleSubmit(event);
       }}
     >
-      {error ? <AlertMessage type="error" message={error} /> : null}
-      {success ? <AlertMessage type="success" message={success} /> : null}
       <div className="space-y-4">
         <div className="space-y-1.5">
           <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--auth-form-muted)]">

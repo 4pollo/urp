@@ -47,6 +47,16 @@ export type RoleListItem = {
   createdAt: string;
 };
 
+export type RoleDetail = {
+  id: number;
+  name: string;
+  description: string;
+  userCount: number;
+  permissions: PermissionItem[];
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type PermissionItem = {
   id: number;
   key: string;

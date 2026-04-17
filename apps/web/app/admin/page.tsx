@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { AlertMessage } from '../../components/common/alert-message';
 import { EmptyState } from '../../components/common/empty-state';
 import {
@@ -29,6 +30,7 @@ import { isSuperAdmin } from '../../lib/guards';
 import { destroySession, hasSession } from '../../lib/session';
 import type {
   PermissionItem,
+  RoleDetail,
   RoleListItem,
   UserListItem,
 } from '../../lib/types';
@@ -46,12 +48,10 @@ export default function AdminPage() {
   const { users, roles, permissions, loading, error, reload } = useAdminData(
     authenticated && superAdmin && !permissionsLoading,
   );
-  const [statusMessage, setStatusMessage] = useState<{
-    type: 'error' | 'success';
-    message: string;
-  } | null>(null);
   const [selectedUser, setSelectedUser] = useState<UserListItem | null>(null);
   const [selectedRole, setSelectedRole] = useState<RoleListItem | null>(null);
+  const [selectedRoleDetail, setSelectedRoleDetail] =
+    useState<RoleDetail | null>(null);
   const [selectedPermission, setSelectedPermission] =
     useState<PermissionItem | null>(null);
   const [confirmMode, setConfirmMode] = useState<
@@ -63,7 +63,10 @@ export default function AdminPage() {
     null,
   );
   const [deletePending, setDeletePending] = useState(false);
+  const [roleDetailLoading, setRoleDetailLoading] = useState(false);
   const [roleSubmitPending, setRoleSubmitPending] = useState(false);
+  const [rolePermissionsSubmitPending, setRolePermissionsSubmitPending] =
+    useState(false);
   const [permissionSubmitPending, setPermissionSubmitPending] = useState(false);
 
   useEffect(() => {
@@ -107,13 +110,10 @@ export default function AdminPage() {
         method: 'PATCH',
         body: JSON.stringify({ status: nextStatus }),
       });
-      setStatusMessage({ type: 'success', message: '用户状态更新成功' });
+      toast.success('用户状态更新成功');
       await reload(currentPage, currentLimit);
     } catch (err) {
-      setStatusMessage({
-        type: 'error',
-        message: err instanceof Error ? err.message : '操作失败',
-      });
+      toast.error(err instanceof Error ? err.message : '操作失败');
     } finally {
       setPendingUserId(null);
     }
@@ -125,6 +125,28 @@ export default function AdminPage() {
     }
 
     await reload(page, currentLimit);
+  }
+
+  async function handleRoleEdit(role: RoleListItem) {
+    if (pendingRoleId !== null || roleDetailLoading) {
+      return;
+    }
+
+    setPendingRoleId(role.id);
+    setRoleDetailLoading(true);
+    setSelectedRole(role);
+    setSelectedRoleDetail(null);
+    try {
+      const result = await apiRequest<RoleDetail>(`/api/roles/${role.id}`);
+      setSelectedRoleDetail(result.data);
+    } catch (err) {
+      setSelectedRole(null);
+      setSelectedRoleDetail(null);
+      toast.error(err instanceof Error ? err.message : '加载角色详情失败');
+    } finally {
+      setRoleDetailLoading(false);
+      setPendingRoleId(null);
+    }
   }
 
   async function handleDeleteConfirmed() {
@@ -139,7 +161,7 @@ export default function AdminPage() {
         await apiRequest<{ message: string }>(`/api/users/${selectedUser.id}`, {
           method: 'DELETE',
         });
-        setStatusMessage({ type: 'success', message: '用户删除成功' });
+        toast.success('用户删除成功');
       }
 
       if (confirmMode === 'delete-role' && selectedRole) {
@@ -147,7 +169,7 @@ export default function AdminPage() {
         await apiRequest<{ message: string }>(`/api/roles/${selectedRole.id}`, {
           method: 'DELETE',
         });
-        setStatusMessage({ type: 'success', message: '角色删除成功' });
+        toast.success('角色删除成功');
       }
 
       if (confirmMode === 'delete-permission' && selectedPermission) {
@@ -156,19 +178,17 @@ export default function AdminPage() {
           `/api/permissions/${selectedPermission.id}`,
           { method: 'DELETE' },
         );
-        setStatusMessage({ type: 'success', message: '权限删除成功' });
+        toast.success('权限删除成功');
       }
 
       setConfirmMode(null);
       setSelectedUser(null);
       setSelectedRole(null);
+      setSelectedRoleDetail(null);
       setSelectedPermission(null);
       await reload(currentPage, currentLimit);
     } catch (err) {
-      setStatusMessage({
-        type: 'error',
-        message: err instanceof Error ? err.message : '删除失败',
-      });
+      toast.error(err instanceof Error ? err.message : '删除失败');
     } finally {
       setDeletePending(false);
       setPendingUserId(null);
@@ -190,16 +210,49 @@ export default function AdminPage() {
         method: 'PUT',
         body: JSON.stringify(payload),
       });
-      setSelectedRole(null);
-      setStatusMessage({ type: 'success', message: '角色更新成功' });
+      if (selectedRoleDetail) {
+        setSelectedRoleDetail({
+          ...selectedRoleDetail,
+          name: payload.name,
+          description: payload.description,
+        });
+      }
+      toast.success('角色更新成功');
       await reload(currentPage, currentLimit);
     } catch (err) {
-      setStatusMessage({
-        type: 'error',
-        message: err instanceof Error ? err.message : '更新失败',
-      });
+      toast.error(err instanceof Error ? err.message : '更新失败');
     } finally {
       setRoleSubmitPending(false);
+      setPendingRoleId(null);
+    }
+  }
+
+  async function handleRolePermissionsSubmit(permissionIds: number[]) {
+    if (!selectedRole || rolePermissionsSubmitPending) return;
+
+    setRolePermissionsSubmitPending(true);
+    setPendingRoleId(selectedRole.id);
+    try {
+      await apiRequest(`/api/roles/${selectedRole.id}/permissions`, {
+        method: 'PUT',
+        body: JSON.stringify({ permissionIds }),
+      });
+      setSelectedRoleDetail((current) =>
+        current
+          ? {
+              ...current,
+              permissions: permissions.filter((permission) =>
+                permissionIds.includes(permission.id),
+              ),
+            }
+          : current,
+      );
+      toast.success('角色权限更新成功');
+      await reload(currentPage, currentLimit);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '更新失败');
+    } finally {
+      setRolePermissionsSubmitPending(false);
       setPendingRoleId(null);
     }
   }
@@ -219,13 +272,10 @@ export default function AdminPage() {
         body: JSON.stringify(payload),
       });
       setSelectedPermission(null);
-      setStatusMessage({ type: 'success', message: '权限更新成功' });
+      toast.success('权限更新成功');
       await reload(currentPage, currentLimit);
     } catch (err) {
-      setStatusMessage({
-        type: 'error',
-        message: err instanceof Error ? err.message : '更新失败',
-      });
+      toast.error(err instanceof Error ? err.message : '更新失败');
     } finally {
       setPermissionSubmitPending(false);
       setPendingPermissionId(null);
@@ -296,12 +346,6 @@ export default function AdminPage() {
         </p>
       </div>
 
-      {statusMessage ? (
-        <AlertMessage
-          type={statusMessage.type}
-          message={statusMessage.message}
-        />
-      ) : null}
       {error ? (
         <AlertMessage
           type="error"
@@ -357,16 +401,14 @@ export default function AdminPage() {
                 roles={roles}
                 pendingRoleId={pendingRoleId}
                 onEdit={(role) => {
-                  if (pendingRoleId !== null) {
-                    return;
-                  }
-                  setSelectedRole(role);
+                  void handleRoleEdit(role);
                 }}
                 onDelete={(role) => {
                   if (pendingRoleId !== null) {
                     return;
                   }
                   setSelectedRole(role);
+                  setSelectedRoleDetail(null);
                   setConfirmMode('delete-role');
                 }}
               />
@@ -409,6 +451,7 @@ export default function AdminPage() {
             setConfirmMode(null);
             setSelectedUser(null);
             setSelectedRole(null);
+            setSelectedRoleDetail(null);
             setSelectedPermission(null);
           }
         }}
@@ -430,15 +473,23 @@ export default function AdminPage() {
 
       <RoleEditDialog
         role={selectedRole}
+        roleDetail={selectedRoleDetail}
+        permissions={permissions}
         open={Boolean(selectedRole) && confirmMode !== 'delete-role'}
+        detailLoading={roleDetailLoading}
         pending={roleSubmitPending}
+        permissionPending={rolePermissionsSubmitPending}
         onOpenChange={(open) => {
           if (!open) {
             setSelectedRole(null);
+            setSelectedRoleDetail(null);
           }
         }}
         onSubmit={(payload) => {
           void handleRoleSubmit(payload);
+        }}
+        onPermissionsSubmit={(permissionIds) => {
+          void handleRolePermissionsSubmit(permissionIds);
         }}
       />
 
