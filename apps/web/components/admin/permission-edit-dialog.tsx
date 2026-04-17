@@ -3,14 +3,18 @@
 import { FormEvent, useEffect, useState } from 'react';
 import type { PermissionItem } from '../../lib/types';
 import { Button } from '../ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '../ui/dialog';
 import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Textarea } from '../ui/textarea';
 
 export function PermissionEditDialog({
   permission,
@@ -60,45 +64,52 @@ export function PermissionEditDialog({
         }
       }}
     >
-      <DialogContent>
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>编辑权限</DialogTitle>
           <DialogDescription>修改权限标识、分组与描述。</DialogDescription>
         </DialogHeader>
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <div className="space-y-2">
-            <label className="text-xs uppercase tracking-[0.12em] text-[var(--foreground-tertiary)]">
-              权限标识
-            </label>
-            <Input
-              value={key}
-              onChange={(event) => setKey(event.target.value)}
-              required
-              disabled={pending}
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs uppercase tracking-[0.12em] text-[var(--foreground-tertiary)]">
-              权限分组
-            </label>
-            <Input
-              value={group}
-              onChange={(event) => setGroup(event.target.value)}
-              required
-              disabled={pending}
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs uppercase tracking-[0.12em] text-[var(--foreground-tertiary)]">
-              权限描述
-            </label>
-            <Input
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              disabled={pending}
-            />
-          </div>
-          <div className="flex justify-end gap-3">
+        <form onSubmit={handleSubmit}>
+          <Card>
+            <CardHeader>
+              <CardTitle>权限信息</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="permission-key">权限标识</Label>
+                  <Input
+                    id="permission-key"
+                    value={key}
+                    onChange={(event) => setKey(event.target.value)}
+                    required
+                    disabled={pending}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="permission-group">权限分组</Label>
+                  <Input
+                    id="permission-group"
+                    value={group}
+                    onChange={(event) => setGroup(event.target.value)}
+                    required
+                    disabled={pending}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="permission-description">权限描述</Label>
+                <Textarea
+                  id="permission-description"
+                  value={description}
+                  onChange={(event) => setDescription(event.target.value)}
+                  disabled={pending}
+                  rows={4}
+                />
+              </div>
+            </CardContent>
+          </Card>
+          <DialogFooter className="mt-6">
             <Button
               type="button"
               variant="outline"
@@ -113,7 +124,7 @@ export function PermissionEditDialog({
             >
               {pending ? '保存中...' : '保存'}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

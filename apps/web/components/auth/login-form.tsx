@@ -8,6 +8,12 @@ import { toast } from 'sonner';
 import { useAuth } from '../../hooks/use-auth';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '../ui/input-group';
+import { Label } from '../ui/label';
 
 export function LoginForm() {
   const router = useRouter();
@@ -40,12 +46,11 @@ export function LoginForm() {
         void handleSubmit(event);
       }}
     >
-      <div className="space-y-4">
-        <div className="space-y-1.5">
-          <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--auth-form-muted)]">
-            邮箱地址
-          </label>
+      <div className="space-y-5">
+        <div className="space-y-2">
+          <Label htmlFor="login-email">邮箱地址</Label>
           <Input
+            id="login-email"
             name="email"
             type="email"
             placeholder="your@email.com"
@@ -53,42 +58,38 @@ export function LoginForm() {
             autoComplete="email"
           />
         </div>
-        <div className="space-y-1.5">
-          <label className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--auth-form-muted)]">
-            密码
-          </label>
-          <div className="relative">
-            <Input
-              className="pr-11"
+        <div className="space-y-2">
+          <Label htmlFor="login-password">密码</Label>
+          <InputGroup>
+            <InputGroupInput
+              id="login-password"
               name="password"
               type={showPassword ? 'text' : 'password'}
               placeholder="输入密码"
               required
               autoComplete="current-password"
             />
-            <button
-              className="absolute right-2 top-1/2 z-10 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center text-[var(--auth-form-muted)] transition-colors hover:text-[var(--auth-form-foreground)]"
-              type="button"
-              aria-label={showPassword ? '隐藏密码' : '显示密码'}
-              onMouseDown={(event) => event.preventDefault()}
-              onClick={() => setShowPassword((value) => !value)}
-            >
-              {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
-            </button>
-          </div>
+            <InputGroupAddon>
+              <button
+                className="inline-flex h-8 w-8 items-center justify-center rounded-none text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                type="button"
+                aria-label={showPassword ? '隐藏密码' : '显示密码'}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => setShowPassword((value) => !value)}
+              >
+                {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+              </button>
+            </InputGroupAddon>
+          </InputGroup>
         </div>
       </div>
-      <Button
-        className="w-full border-[var(--auth-form-foreground)] bg-[var(--auth-form-foreground)] text-[var(--auth-form-background)] hover:bg-[var(--foreground-secondary)]"
-        type="submit"
-        disabled={isSubmitting}
-      >
+      <Button className="w-full" type="submit" disabled={isSubmitting}>
         {isSubmitting ? '登录中...' : '登录'}
       </Button>
-      <div className="pt-2 text-center text-xs text-[var(--auth-form-muted)]">
+      <div className="pt-2 text-center text-xs text-muted-foreground">
         还没有账号？{' '}
         <Link
-          className="border-b border-[var(--auth-form-link-border)] text-[var(--auth-form-foreground)]"
+          className="border-b border-border text-foreground"
           href="/register"
         >
           立即注册

@@ -1,5 +1,15 @@
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '../ui/pagination';
 import {
   Table,
   TableBody,
@@ -32,10 +42,25 @@ export function UsersTable({
   const totalPages = Math.max(1, Math.ceil(total / limit));
   const start = total === 0 ? 0 : (page - 1) * limit + 1;
   const end = total === 0 ? 0 : Math.min(page * limit, total);
+  const pageNumbers = Array.from(
+    { length: totalPages },
+    (_, index) => index + 1,
+  ).filter(
+    (pageNumber) =>
+      Math.abs(pageNumber - page) <= 1 ||
+      pageNumber === 1 ||
+      pageNumber === totalPages,
+  );
 
   return (
-    <div className="space-y-4">
-      <div className="panel overflow-x-auto">
+    <Card>
+      <CardHeader className="flex flex-col gap-2 border-b border-border pb-4 sm:flex-row sm:items-center sm:justify-between">
+        <CardTitle>用户列表</CardTitle>
+        <div className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
+          当前显示 {start}-{end} / {total}
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-6 p-0">
         <Table>
           <TableHeader>
             <TableRow>
@@ -55,12 +80,20 @@ export function UsersTable({
                 <TableRow key={user.id}>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
-                    <Badge>{user.status === 'active' ? '正常' : '冻结'}</Badge>
+                    <Badge
+                      variant={
+                        user.status === 'active' ? 'secondary' : 'outline'
+                      }
+                    >
+                      {user.status === 'active' ? '正常' : '冻结'}
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1.5">
                       {user.roles.map((role) => (
-                        <Badge key={role.id}>{role.name}</Badge>
+                        <Badge key={role.id} variant="outline">
+                          {role.name}
+                        </Badge>
                       ))}
                     </div>
                   </TableCell>
@@ -99,29 +132,49 @@ export function UsersTable({
             })}
           </TableBody>
         </Table>
-      </div>
 
-      <div className="flex flex-col gap-4 border border-[var(--border)] bg-[var(--panel)] px-4 py-3 text-xs uppercase tracking-[0.18em] text-[var(--foreground-tertiary)] lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          当前显示 {start}-{end} / {total}
+        <div className="flex flex-col gap-4 border-t border-border px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
+            第 {page} / {totalPages} 页
+          </div>
+          <Pagination className="mx-0 w-auto justify-start sm:justify-end">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  disabled={page <= 1}
+                  onClick={() => onPageChange(page - 1)}
+                />
+              </PaginationItem>
+              {pageNumbers.map((pageNumber, index) => {
+                const previous = pageNumbers[index - 1];
+                const needsGap = previous && pageNumber - previous > 1;
+
+                return [
+                  needsGap ? (
+                    <PaginationItem key={`ellipsis-${pageNumber}`}>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  ) : null,
+                  <PaginationItem key={pageNumber}>
+                    <PaginationLink
+                      isActive={pageNumber === page}
+                      onClick={() => onPageChange(pageNumber)}
+                    >
+                      {pageNumber}
+                    </PaginationLink>
+                  </PaginationItem>,
+                ];
+              })}
+              <PaginationItem>
+                <PaginationNext
+                  disabled={page >= totalPages}
+                  onClick={() => onPageChange(page + 1)}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
-        <div className="flex gap-2 self-end lg:self-auto">
-          <Button
-            variant="outline"
-            disabled={page <= 1}
-            onClick={() => onPageChange(page - 1)}
-          >
-            上一页
-          </Button>
-          <Button
-            variant="outline"
-            disabled={page >= totalPages}
-            onClick={() => onPageChange(page + 1)}
-          >
-            下一页
-          </Button>
-        </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

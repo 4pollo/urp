@@ -1,16 +1,26 @@
 'use client';
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { ChevronDown, ChevronUp, Minus } from 'lucide-react';
 import type { PermissionItem, RoleDetail, RoleListItem } from '../../lib/types';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Checkbox } from '../ui/checkbox';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '../ui/dialog';
 import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { ScrollArea } from '../ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { Textarea } from '../ui/textarea';
 
 export function RoleEditDialog({
   role,
@@ -40,6 +50,9 @@ export function RoleEditDialog({
   const [selectedPermissionIds, setSelectedPermissionIds] = useState<number[]>(
     [],
   );
+  const [expandedPermissionGroups, setExpandedPermissionGroups] = useState<
+    string[]
+  >([]);
 
   useEffect(() => {
     setName(role?.name || '');
@@ -50,7 +63,10 @@ export function RoleEditDialog({
     setSelectedPermissionIds(
       roleDetail?.permissions.map((permission) => permission.id) || [],
     );
-  }, [roleDetail]);
+    setExpandedPermissionGroups(
+      Array.from(new Set(permissions.map((permission) => permission.group))),
+    );
+  }, [permissions, roleDetail]);
 
   const permissionsByGroup = useMemo(() => {
     const groups = new Map<string, PermissionItem[]>();
@@ -108,6 +124,34 @@ export function RoleEditDialog({
     });
   }
 
+  function handleGroupSelectionToggle(permissionIds: number[]) {
+    if (permissionPending || detailLoading || roleLocked) {
+      return;
+    }
+
+    setSelectedPermissionIds((current) => {
+      const allSelected = permissionIds.every((id) => current.includes(id));
+
+      if (allSelected) {
+        return current.filter((id) => !permissionIds.includes(id));
+      }
+
+      const currentSet = new Set(current);
+      for (const permissionId of permissionIds) {
+        currentSet.add(permissionId);
+      }
+      return Array.from(currentSet);
+    });
+  }
+
+  function togglePermissionGroupExpanded(group: string) {
+    setExpandedPermissionGroups((current) =>
+      current.includes(group)
+        ? current.filter((item) => item !== group)
+        : [...current, group],
+    );
+  }
+
   const disableClose = pending || permissionPending || detailLoading;
 
   return (
@@ -119,158 +163,273 @@ export function RoleEditDialog({
         }
       }}
     >
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-5xl sm:max-w-5xl">
         <DialogHeader>
           <DialogTitle>编辑角色</DialogTitle>
           <DialogDescription>修改角色名称、描述与分配权限。</DialogDescription>
         </DialogHeader>
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            {roleLocked ? (
-              <div className="rounded-md border border-[var(--border)] bg-[var(--background-secondary)] px-4 py-3 text-xs text-[var(--foreground-secondary)]">
-                系统角色的名称和描述不能修改。
-              </div>
-            ) : null}
-            <div className="space-y-2">
-              <label className="text-xs uppercase tracking-[0.12em] text-[var(--foreground-tertiary)]">
-                角色名称
-              </label>
-              <Input
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                required
-                disabled={pending || roleLocked}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs uppercase tracking-[0.12em] text-[var(--foreground-tertiary)]">
-                角色描述
-              </label>
-              <Input
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-                disabled={pending || roleLocked}
-              />
-            </div>
-            <div className="flex justify-end gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                disabled={disableClose}
-                onClick={() => onOpenChange(false)}
-              >
-                取消
-              </Button>
-              <Button
-                type="submit"
-                disabled={pending || roleLocked || !name.trim()}
-              >
-                {pending ? '保存中...' : '保存角色'}
-              </Button>
-            </div>
-          </form>
+        <Tabs defaultValue="details" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="details">基础信息</TabsTrigger>
+            <TabsTrigger value="permissions">角色权限</TabsTrigger>
+          </TabsList>
 
-          <div className="space-y-4 border-t border-[var(--border)] pt-6 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
-            <div>
-              <h3 className="text-sm font-semibold text-[var(--foreground)]">
-                角色权限
-              </h3>
-              <p className="mt-1 text-xs text-[var(--foreground-tertiary)]">
-                为当前角色勾选需要的权限。
-              </p>
-            </div>
-
-            {detailLoading ? (
-              <div className="rounded-md border border-[var(--border)] bg-[var(--background-secondary)] px-4 py-6 text-sm text-[var(--foreground-secondary)]">
-                正在加载角色权限...
-              </div>
-            ) : roleDetail ? (
-              <>
-                {roleLocked ? (
-                  <div className="rounded-md border border-[var(--border)] bg-[var(--background-secondary)] px-4 py-3 text-xs text-[var(--foreground-secondary)]">
-                    系统角色的权限不能修改。
+          <TabsContent value="details">
+            <Card>
+              <CardHeader>
+                <CardTitle>角色信息</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form className="space-y-5" onSubmit={handleSubmit}>
+                  {roleLocked ? (
+                    <Alert>
+                      <AlertTitle>系统角色</AlertTitle>
+                      <AlertDescription>
+                        系统角色的名称和描述不能修改。
+                      </AlertDescription>
+                    </Alert>
+                  ) : null}
+                  <div className="space-y-2">
+                    <Label htmlFor="role-name">角色名称</Label>
+                    <Input
+                      id="role-name"
+                      value={name}
+                      onChange={(event) => setName(event.target.value)}
+                      required
+                      disabled={pending || roleLocked}
+                    />
                   </div>
-                ) : null}
-
-                <div className="max-h-[420px] space-y-4 overflow-y-auto pr-1">
-                  {permissionsByGroup.map(([group, items]) => (
-                    <div
-                      key={group}
-                      className="space-y-3 rounded-md border border-[var(--border)] p-4"
+                  <div className="space-y-2">
+                    <Label htmlFor="role-description">角色描述</Label>
+                    <Textarea
+                      id="role-description"
+                      value={description}
+                      onChange={(event) => setDescription(event.target.value)}
+                      disabled={pending || roleLocked}
+                      rows={5}
+                    />
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={disableClose}
+                      onClick={() => onOpenChange(false)}
                     >
-                      <div>
-                        <h4 className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--foreground)]">
-                          {group}
-                        </h4>
-                        <p className="mt-1 text-[11px] text-[var(--foreground-tertiary)]">
-                          {items.length} 项权限
-                        </p>
-                      </div>
-                      <div className="space-y-3">
-                        {items.map((permission) => {
-                          const checked = selectedPermissionIds.includes(
-                            permission.id,
+                      取消
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={pending || roleLocked || !name.trim()}
+                    >
+                      {pending ? '保存中...' : '保存角色'}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="permissions">
+            <Card>
+              <CardHeader className="space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                  <CardTitle>角色权限</CardTitle>
+                  {roleDetail ? (
+                    <Badge variant="secondary">
+                      {selectedPermissionIds.length} / {permissions.length}
+                    </Badge>
+                  ) : null}
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  为当前角色勾选需要的权限。
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {detailLoading ? (
+                  <Alert>
+                    <AlertTitle>加载中</AlertTitle>
+                    <AlertDescription>正在加载角色权限...</AlertDescription>
+                  </Alert>
+                ) : roleDetail ? (
+                  <>
+                    {roleLocked ? (
+                      <Alert>
+                        <AlertTitle>系统角色</AlertTitle>
+                        <AlertDescription>
+                          系统角色的权限不能修改。
+                        </AlertDescription>
+                      </Alert>
+                    ) : null}
+
+                    <ScrollArea className="h-[420px] pr-3">
+                      <div className="space-y-4">
+                        {permissionsByGroup.map(([group, items]) => {
+                          const groupPermissionIds = items.map(
+                            (permission) => permission.id,
                           );
+                          const selectedCount = groupPermissionIds.filter(
+                            (id) => selectedPermissionIds.includes(id),
+                          ).length;
+                          const allSelected =
+                            groupPermissionIds.length > 0 &&
+                            selectedCount === groupPermissionIds.length;
+                          const partiallySelected =
+                            selectedCount > 0 && !allSelected;
+                          const groupExpanded =
+                            expandedPermissionGroups.includes(group);
 
                           return (
-                            <label
-                              key={permission.id}
-                              className="flex items-start gap-3 text-sm text-[var(--foreground)]"
-                            >
-                              <input
-                                type="checkbox"
-                                className="mt-0.5 h-4 w-4 border border-[var(--input-border)] bg-[var(--input-background)]"
-                                checked={checked}
-                                disabled={
-                                  permissionPending ||
-                                  detailLoading ||
-                                  roleLocked
-                                }
-                                onChange={(event) =>
-                                  handlePermissionToggle(
-                                    permission.id,
-                                    event.target.checked,
-                                  )
-                                }
-                              />
-                              <span className="space-y-1">
-                                <span className="block font-medium">
-                                  {permission.key}
-                                </span>
-                                <span className="block text-xs text-[var(--foreground-tertiary)]">
-                                  {permission.description || '暂无描述'}
-                                </span>
-                              </span>
-                            </label>
+                            <Card key={group}>
+                              <CardHeader className="gap-0 p-0">
+                                <div className="flex items-center gap-3 border-b border-border px-6 py-4">
+                                  <button
+                                    type="button"
+                                    className="flex h-5 w-5 shrink-0 items-center justify-center border border-input bg-background text-foreground transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                                    disabled={
+                                      permissionPending ||
+                                      detailLoading ||
+                                      roleLocked
+                                    }
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      handleGroupSelectionToggle(
+                                        groupPermissionIds,
+                                      );
+                                    }}
+                                    aria-label={`${group}权限组全选切换`}
+                                    aria-checked={
+                                      allSelected
+                                        ? 'true'
+                                        : partiallySelected
+                                          ? 'mixed'
+                                          : 'false'
+                                    }
+                                  >
+                                    {allSelected ? (
+                                      <div className="h-2.5 w-2.5 bg-foreground" />
+                                    ) : partiallySelected ? (
+                                      <Minus className="h-3.5 w-3.5" />
+                                    ) : null}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="flex flex-1 items-center justify-between gap-3 text-left"
+                                    onClick={() =>
+                                      togglePermissionGroupExpanded(group)
+                                    }
+                                    aria-label={
+                                      groupExpanded
+                                        ? `折叠${group}权限组`
+                                        : `展开${group}权限组`
+                                    }
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      <CardTitle className="text-xs">
+                                        {group}
+                                      </CardTitle>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                      <Badge variant="outline">
+                                        {selectedCount} / {items.length}
+                                      </Badge>
+                                      {groupExpanded ? (
+                                        <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                                      ) : (
+                                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                      )}
+                                    </div>
+                                  </button>
+                                </div>
+                              </CardHeader>
+                              {groupExpanded ? (
+                                <CardContent>
+                                  <div className="grid gap-3 md:grid-cols-3">
+                                    {items.map((permission) => {
+                                      const checked =
+                                        selectedPermissionIds.includes(
+                                          permission.id,
+                                        );
+                                      const primaryLabel =
+                                        permission.description ||
+                                        permission.key;
+
+                                      return (
+                                        <div
+                                          key={permission.id}
+                                          className="border border-border bg-background"
+                                        >
+                                          <div className="flex items-start gap-3 p-3">
+                                            <div className="pt-0.5">
+                                              <Checkbox
+                                                id={`permission-${permission.id}`}
+                                                checked={checked}
+                                                disabled={
+                                                  permissionPending ||
+                                                  detailLoading ||
+                                                  roleLocked
+                                                }
+                                                onCheckedChange={(value) =>
+                                                  handlePermissionToggle(
+                                                    permission.id,
+                                                    value === true,
+                                                  )
+                                                }
+                                              />
+                                            </div>
+                                            <div className="min-w-0 flex-1 space-y-1">
+                                              <Label
+                                                htmlFor={`permission-${permission.id}`}
+                                                className="block space-y-1 text-sm"
+                                              >
+                                                <span className="block font-medium text-foreground">
+                                                  {primaryLabel}
+                                                </span>
+                                                <span className="block text-xs text-muted-foreground">
+                                                  {permission.key}
+                                                </span>
+                                              </Label>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </CardContent>
+                              ) : null}
+                            </Card>
                           );
                         })}
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    </ScrollArea>
 
-                <div className="flex justify-end gap-3">
-                  <Button
-                    type="button"
-                    disabled={
-                      detailLoading ||
-                      permissionPending ||
-                      roleLocked ||
-                      !permissionSelectionChanged
-                    }
-                    onClick={() => onPermissionsSubmit(selectedPermissionIds)}
-                  >
-                    {permissionPending ? '保存中...' : '保存权限'}
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <div className="rounded-md border border-[var(--border)] bg-[var(--background-secondary)] px-4 py-6 text-sm text-[var(--foreground-secondary)]">
-                未获取到角色详情。
-              </div>
-            )}
-          </div>
-        </div>
+                    <DialogFooter>
+                      <Button
+                        type="button"
+                        disabled={
+                          detailLoading ||
+                          permissionPending ||
+                          roleLocked ||
+                          !permissionSelectionChanged
+                        }
+                        onClick={() =>
+                          onPermissionsSubmit(selectedPermissionIds)
+                        }
+                      >
+                        {permissionPending ? '保存中...' : '保存权限'}
+                      </Button>
+                    </DialogFooter>
+                  </>
+                ) : (
+                  <Alert variant="destructive">
+                    <AlertTitle>加载失败</AlertTitle>
+                    <AlertDescription>未获取到角色详情。</AlertDescription>
+                  </Alert>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );

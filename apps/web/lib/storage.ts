@@ -1,7 +1,6 @@
 const ACCESS_TOKEN_KEY = 'accessToken';
 const REFRESH_TOKEN_KEY = 'refreshToken';
 const USER_KEY = 'user';
-const THEME_KEY = 'theme';
 
 function canUseStorage() {
   return typeof window !== 'undefined';
@@ -55,23 +54,6 @@ export function setSession(session: {
   if (session.user) {
     window.localStorage.setItem(USER_KEY, JSON.stringify(session.user));
   }
-}
-
-export type ThemePreference = 'light' | 'dark' | 'system';
-
-export function getThemePreference(): ThemePreference | null {
-  if (!canUseStorage()) return null;
-
-  const value = window.localStorage.getItem(THEME_KEY);
-  return value === 'light' || value === 'dark' || value === 'system'
-    ? value
-    : null;
-}
-
-export function setThemePreference(theme: ThemePreference) {
-  if (!canUseStorage()) return;
-
-  window.localStorage.setItem(THEME_KEY, theme);
 }
 
 export function clearSession() {

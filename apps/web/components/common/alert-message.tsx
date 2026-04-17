@@ -1,4 +1,6 @@
+import { AlertCircle, CircleCheck, Info } from 'lucide-react';
 import { Button } from '../ui/button';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { cn } from '../../lib/utils';
 
 export function AlertMessage({
@@ -14,29 +16,31 @@ export function AlertMessage({
   actionLabel?: string;
   onAction?: () => void;
 }) {
+  const Icon =
+    type === 'error' ? AlertCircle : type === 'success' ? CircleCheck : Info;
+
   return (
-    <div
+    <Alert
       className={cn(
-        'mb-4 border px-4 py-3 text-xs',
+        'mb-4 rounded-none border',
         type === 'error' &&
-          'border-[var(--status-error-border)] bg-[var(--status-error-background)] text-[var(--status-error-foreground)]',
+          'border-destructive/50 bg-destructive/10 text-destructive [&>svg]:text-destructive',
         type === 'success' &&
-          'border-[var(--status-success-border)] bg-[var(--status-success-background)] text-[var(--status-success-foreground)]',
+          'border-primary/20 bg-primary/10 text-foreground [&>svg]:text-primary',
         type === 'info' &&
-          'border-[var(--status-info-border)] bg-[var(--status-info-background)] text-[var(--status-info-foreground)]',
+          'border-border bg-muted/50 text-foreground [&>svg]:text-muted-foreground',
       )}
     >
-      <div className="uppercase tracking-[0.05em]">{message}</div>
-      {detail ? (
-        <div className="mt-2 normal-case text-xs opacity-80">{detail}</div>
-      ) : null}
-      {actionLabel && onAction ? (
-        <div className="mt-3">
+      <Icon className="h-4 w-4" />
+      <AlertTitle className="uppercase tracking-[0.05em]">{message}</AlertTitle>
+      <AlertDescription className="space-y-3 text-xs text-current/80">
+        {detail ? <p>{detail}</p> : null}
+        {actionLabel && onAction ? (
           <Button variant="outline" onClick={onAction}>
             {actionLabel}
           </Button>
-        </div>
-      ) : null}
-    </div>
+        ) : null}
+      </AlertDescription>
+    </Alert>
   );
 }

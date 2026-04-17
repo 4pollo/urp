@@ -4,115 +4,64 @@
 
 :root {
   color-scheme: light;
-  --background: #f5f5f5;
-  --background-secondary: #ffffff;
-  --background-tertiary: #ededed;
-  --foreground: #0a0a0a;
-  --foreground-secondary: #404040;
-  --foreground-tertiary: #737373;
-  --border: #d4d4d4;
-  --border-light: #e5e5e5;
-  --panel: #ffffff;
-  --surface-hover: #ededed;
-  --header-background: rgba(255, 255, 255, 0.94);
-  --overlay: rgba(10, 10, 10, 0.68);
-  --dialog-background: #ffffff;
-  --dialog-foreground: #0a0a0a;
-  --input-background: #f5f5f5;
-  --input-foreground: #0a0a0a;
-  --input-border: #d4d4d4;
-  --input-placeholder: #737373;
-  --input-focus: #0a0a0a;
-  --button-primary-background: #0a0a0a;
-  --button-primary-foreground: #ffffff;
-  --button-primary-hover: #262626;
-  --button-outline-border: #d4d4d4;
-  --button-outline-foreground: #404040;
-  --button-outline-hover-background: #ededed;
-  --button-outline-hover-foreground: #0a0a0a;
-  --button-ghost-foreground: #737373;
-  --button-ghost-hover-foreground: #0a0a0a;
-  --button-danger-border: #b91c1c;
-  --button-danger-background: transparent;
-  --button-danger-foreground: #7f1d1d;
-  --button-danger-hover-background: #b91c1c;
-  --button-danger-hover-foreground: #ffffff;
-  --status-error-background: #fef2f2;
-  --status-error-border: #b91c1c;
-  --status-error-foreground: #7f1d1d;
-  --status-success-background: #f0fdf4;
-  --status-success-border: #15803d;
-  --status-success-foreground: #166534;
-  --status-info-background: #f5f5f5;
-  --status-info-border: #d4d4d4;
-  --status-info-foreground: #404040;
-  --auth-form-background: #ffffff;
-  --auth-form-foreground: #0a0a0a;
-  --auth-form-muted: #737373;
-  --auth-form-link-border: #d4d4d4;
+  --background: 0 0% 96.1%;
+  --foreground: 0 0% 3.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 3.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 3.9%;
+  --primary: 0 0% 3.9%;
+  --primary-foreground: 0 0% 98%;
+  --secondary: 0 0% 92.9%;
+  --secondary-foreground: 0 0% 9%;
+  --muted: 0 0% 92.9%;
+  --muted-foreground: 0 0% 45.1%;
+  --accent: 0 0% 92.9%;
+  --accent-foreground: 0 0% 9%;
+  --destructive: 0 72.2% 50.6%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 0 0% 83.9%;
+  --input: 0 0% 83.9%;
+  --ring: 0 0% 3.9%;
+  --radius: 0rem;
 }
 
-html.dark {
+.dark {
   color-scheme: dark;
-  --background: #0a0a0a;
-  --background-secondary: #141414;
-  --background-tertiary: #1f1f1f;
-  --foreground: #ffffff;
-  --foreground-secondary: #a3a3a3;
-  --foreground-tertiary: #737373;
-  --border: #333333;
-  --border-light: #404040;
-  --panel: #141414;
-  --surface-hover: #1f1f1f;
-  --header-background: rgba(20, 20, 20, 0.94);
-  --overlay: rgba(0, 0, 0, 0.8);
-  --dialog-background: #141414;
-  --dialog-foreground: #ffffff;
-  --input-background: #141414;
-  --input-foreground: #ffffff;
-  --input-border: #404040;
-  --input-placeholder: #737373;
-  --input-focus: #ffffff;
-  --button-primary-background: #ffffff;
-  --button-primary-foreground: #0a0a0a;
-  --button-primary-hover: #e5e5e5;
-  --button-outline-border: #333333;
-  --button-outline-foreground: #a3a3a3;
-  --button-outline-hover-background: #1f1f1f;
-  --button-outline-hover-foreground: #ffffff;
-  --button-ghost-foreground: #737373;
-  --button-ghost-hover-foreground: #ffffff;
-  --button-danger-border: #7f1d1d;
-  --button-danger-background: transparent;
-  --button-danger-foreground: #fca5a5;
-  --button-danger-hover-background: #7f1d1d;
-  --button-danger-hover-foreground: #ffffff;
-  --status-error-background: rgba(127, 29, 29, 0.18);
-  --status-error-border: #7f1d1d;
-  --status-error-foreground: #fca5a5;
-  --status-success-background: rgba(21, 128, 61, 0.16);
-  --status-success-border: #166534;
-  --status-success-foreground: #86efac;
-  --status-info-background: #141414;
-  --status-info-border: #333333;
-  --status-info-foreground: #a3a3a3;
-  --auth-form-background: #ffffff;
-  --auth-form-foreground: #0a0a0a;
-  --auth-form-muted: #737373;
-  --auth-form-link-border: #d4d4d4;
+  --background: 0 0% 3.9%;
+  --foreground: 0 0% 98%;
+  --card: 0 0% 7.8%;
+  --card-foreground: 0 0% 98%;
+  --popover: 0 0% 7.8%;
+  --popover-foreground: 0 0% 98%;
+  --primary: 0 0% 98%;
+  --primary-foreground: 0 0% 3.9%;
+  --secondary: 0 0% 12.2%;
+  --secondary-foreground: 0 0% 98%;
+  --muted: 0 0% 12.2%;
+  --muted-foreground: 0 0% 63.9%;
+  --accent: 0 0% 12.2%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 0 0% 20%;
+  --input: 0 0% 25.1%;
+  --ring: 0 0% 98%;
+  --radius: 0rem;
 }
 
 html,
 body {
   margin: 0;
   min-height: 100%;
-  background: var(--background);
+  background: hsl(var(--background));
 }
 
 body {
-  font-family: 'IBM Plex Mono', 'SFMono-Regular', 'SF Mono', Monaco, Consolas,
+  font-family:
+    'IBM Plex Mono', 'SFMono-Regular', 'SF Mono', Monaco, Consolas,
     'Liberation Mono', 'Courier New', monospace;
-  color: var(--foreground);
+  color: hsl(var(--foreground));
   letter-spacing: -0.01em;
 }
 
@@ -121,8 +70,8 @@ body {
 }
 
 *::selection {
-  background: color-mix(in srgb, var(--foreground) 18%, transparent);
-  color: var(--foreground);
+  background: color-mix(in srgb, hsl(var(--foreground)) 18%, transparent);
+  color: hsl(var(--foreground));
 }
 
 a {
@@ -147,16 +96,16 @@ input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
-  -webkit-text-fill-color: var(--input-foreground);
-  -webkit-box-shadow: 0 0 0 1000px var(--input-background) inset;
-  box-shadow: 0 0 0 1000px var(--input-background) inset;
-  caret-color: var(--input-foreground);
+  -webkit-text-fill-color: hsl(var(--foreground));
+  -webkit-box-shadow: 0 0 0 1000px hsl(var(--background)) inset;
+  box-shadow: 0 0 0 1000px hsl(var(--background)) inset;
+  caret-color: hsl(var(--foreground));
   transition: background-color 9999s ease-out 0s;
 }
 
 .page-title {
   font-family: 'Syne', sans-serif;
-  font-size: clamp(3rem, 5vw, 4.5rem);
+  font-size: clamp(0.9rem, 1.5vw, 1.35rem);
   font-weight: 800;
   letter-spacing: -0.05em;
   line-height: 0.9;
@@ -168,19 +117,19 @@ input:-webkit-autofill:active {
   font-weight: 500;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--foreground-tertiary);
+  color: hsl(var(--muted-foreground));
 }
 
 .panel {
   position: relative;
-  border: 1px solid var(--border);
-  background: var(--panel);
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
 }
 
 .auth-dark-panel {
   position: relative;
-  background: #0a0a0a;
-  color: #ffffff;
+  background: hsl(0 0% 3.9%);
+  color: hsl(0 0% 98%);
 }
 
 .auth-dark-panel::before {
@@ -188,8 +137,16 @@ input:-webkit-autofill:active {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.03) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.02) 0%, transparent 50%);
+    radial-gradient(
+      circle at 20% 30%,
+      rgba(255, 255, 255, 0.03) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 80% 70%,
+      rgba(255, 255, 255, 0.02) 0%,
+      transparent 50%
+    );
   pointer-events: none;
 }
 
@@ -211,9 +168,9 @@ input:-webkit-autofill:active {
   width: 100%;
   max-width: 420px;
   padding: 48px 40px;
-  background: var(--auth-form-background);
-  color: var(--auth-form-foreground);
-  border: 1px solid var(--auth-form-link-border);
+  background: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  border: 1px solid hsl(var(--border));
 }
 
 .console-card-title {
@@ -221,13 +178,13 @@ input:-webkit-autofill:active {
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--foreground-tertiary);
+  color: hsl(var(--muted-foreground));
 }
 
 .console-empty {
   text-align: center;
   padding: 48px 24px;
-  color: var(--foreground-tertiary);
+  color: hsl(var(--muted-foreground));
   font-size: 0.75rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -236,38 +193,4 @@ input:-webkit-autofill:active {
 .app-surface {
   max-width: 1600px;
   margin: 0 auto;
-}
-
-.theme-toggle-group {
-  display: inline-flex;
-  border: 1px solid var(--border);
-  background: var(--panel);
-}
-
-.theme-toggle-button {
-  border: 0;
-  border-right: 1px solid var(--border);
-  background: transparent;
-  color: var(--foreground-tertiary);
-  padding: 0.55rem 0.8rem;
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: background-color 120ms ease, color 120ms ease;
-}
-
-.theme-toggle-button:last-child {
-  border-right: 0;
-}
-
-.theme-toggle-button:hover {
-  background: var(--surface-hover);
-  color: var(--foreground);
-}
-
-.theme-toggle-button[data-active='true'] {
-  background: var(--foreground);
-  color: var(--background);
 }

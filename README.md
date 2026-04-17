@@ -215,7 +215,9 @@ URP 当前定位为 **RBAC 权限系统底模**，适合在客户项目中继续
 
 ### 4. 前端接入
 - 当前正式前端位于 `apps/web/`，已提供 `/login`、`/register`、`/dashboard`、`/admin` 四条主链路
-- 若派生项目继续演进，建议在 `apps/web/lib/*`、`apps/web/hooks/*`、`apps/web/components/*` 基础上扩展
+- `apps/web/components/ui/*` 是前端唯一基础组件层；新增或重构组件时，必须以 shadcn/ui 为基座，并通过这层对外复用
+- feature 目录与共享目录不应再创建平行 primitive；`components/common/*`、`components/layout/*`、`components/admin/*`、`components/dashboard/*`、`components/auth/*` 只应组合 `components/ui/*` 和少量受控包装
+- 若派生项目继续演进，建议在 `apps/web/lib/*`、`apps/web/hooks/*`、`apps/web/components/*` 基础上扩展，并保持 shadcn/ui 组件体系不被替换为另一套自定义基础层
 - `apps/api/public/demo/*` 仍可作为最小联调参考，但不建议直接作为客户项目管理台交付
 
 ## 前端入口

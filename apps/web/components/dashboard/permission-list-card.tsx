@@ -1,10 +1,11 @@
 import { EmptyState } from '../common/empty-state';
+import { Badge } from '../ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 
 export function PermissionListCard({ permissions }: { permissions: string[] }) {
   return (
     <Card>
-      <CardHeader className="border-b border-[var(--border)]">
+      <CardHeader className="border-b border-border">
         <CardTitle>我的权限</CardTitle>
       </CardHeader>
       <CardContent>
@@ -13,12 +14,13 @@ export function PermissionListCard({ permissions }: { permissions: string[] }) {
         ) : (
           <div className="flex flex-wrap gap-2">
             {permissions.map((permission) => (
-              <div
+              <Badge
                 key={permission}
-                className="border border-[var(--border)] bg-[var(--background-tertiary)] px-3 py-2 text-[11px] text-[var(--foreground-secondary)]"
+                variant="secondary"
+                className="px-3 py-2 normal-case tracking-normal"
               >
                 {permission}
-              </div>
+              </Badge>
             ))}
           </div>
         )}

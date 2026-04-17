@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { ShieldCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { AlertMessage } from '../../components/common/alert-message';
@@ -17,6 +18,7 @@ import { RoleEditDialog } from '../../components/admin/role-edit-dialog';
 import { RolesTable } from '../../components/admin/roles-table';
 import { UsersTable } from '../../components/admin/users-table';
 import { AppShell } from '../../components/layout/app-shell';
+import { Badge } from '../../components/ui/badge';
 import {
   Tabs,
   TabsContent,
@@ -218,6 +220,8 @@ export default function AdminPage() {
         });
       }
       toast.success('角色更新成功');
+      setSelectedRole(null);
+      setSelectedRoleDetail(null);
       await reload(currentPage, currentLimit);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '更新失败');
@@ -248,6 +252,8 @@ export default function AdminPage() {
           : current,
       );
       toast.success('角色权限更新成功');
+      setSelectedRole(null);
+      setSelectedRoleDetail(null);
       await reload(currentPage, currentLimit);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '更新失败');
@@ -339,11 +345,18 @@ export default function AdminPage() {
 
   return (
     <AppShell showAdmin>
-      <div className="mb-12">
-        <h1 className="page-title">管理面板</h1>
-        <p className="mt-2 text-xs uppercase tracking-[0.05em] text-[var(--foreground-tertiary)]">
-          管理用户、角色和权限
-        </p>
+      <div className="mb-12 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <h1 className="page-title">管理面板</h1>
+          <p className="mt-2 text-xs uppercase tracking-[0.05em] text-muted-foreground">
+            管理用户、角色和权限
+          </p>
+        </div>
+        <Badge variant="outline" className="gap-1.5 px-3 py-2">
+          <ShieldCheck className="h-3.5 w-3.5" />
+          {totals.totalUsers} 用户 / {totals.totalRoles} 角色 /{' '}
+          {totals.totalPermissions} 权限
+        </Badge>
       </div>
 
       {error ? (
@@ -362,10 +375,25 @@ export default function AdminPage() {
         <AdminStats {...totals} />
 
         <Tabs defaultValue="users">
-          <TabsList>
-            <TabsTrigger value="users">用户管理</TabsTrigger>
-            <TabsTrigger value="roles">角色管理</TabsTrigger>
-            <TabsTrigger value="permissions">权限管理</TabsTrigger>
+          <TabsList className="flex h-auto flex-wrap gap-2 border-0 p-0">
+            <TabsTrigger
+              value="users"
+              className="border px-4 py-2 data-[state=active]:border-foreground"
+            >
+              用户管理
+            </TabsTrigger>
+            <TabsTrigger
+              value="roles"
+              className="border px-4 py-2 data-[state=active]:border-foreground"
+            >
+              角色管理
+            </TabsTrigger>
+            <TabsTrigger
+              value="permissions"
+              className="border px-4 py-2 data-[state=active]:border-foreground"
+            >
+              权限管理
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="users">

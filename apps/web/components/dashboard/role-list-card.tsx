@@ -9,8 +9,11 @@ export function RoleListCard({
 }) {
   return (
     <Card>
-      <CardHeader className="border-b border-[var(--border)]">
-        <CardTitle>角色信息</CardTitle>
+      <CardHeader className="border-b border-border">
+        <div className="flex items-center justify-between gap-3">
+          <CardTitle>角色信息</CardTitle>
+          <Badge variant="outline">{roles.length} 个角色</Badge>
+        </div>
       </CardHeader>
       <CardContent>
         {roles.length === 0 ? (
@@ -18,7 +21,9 @@ export function RoleListCard({
         ) : (
           <div className="flex flex-wrap gap-2">
             {roles.map((role) => (
-              <Badge key={role.id}>{role.name}</Badge>
+              <Badge key={role.id} variant="secondary">
+                {role.name}
+              </Badge>
             ))}
           </div>
         )}

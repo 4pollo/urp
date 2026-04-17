@@ -16,14 +16,20 @@ export function AdminStats({
   ];
 
   return (
-    <div className="grid gap-3 md:grid-cols-3">
+    <div className="grid gap-4 md:grid-cols-3">
       {items.map((item) => (
         <Card key={item.label}>
-          <CardHeader>
-            <CardTitle>{item.label}</CardTitle>
+          <CardHeader className="flex flex-row items-start justify-between space-y-0 border-b border-border pb-4">
+            <div className="space-y-1">
+              <CardTitle>{item.label}</CardTitle>
+              <p className="text-xs text-muted-foreground">当前系统统计</p>
+            </div>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              {item.index}
+            </span>
           </CardHeader>
-          <CardContent>
-            <div className="font-['Syne'] text-[36px] font-extrabold leading-none tracking-[-0.02em] text-[var(--foreground)]">
+          <CardContent className="pt-4">
+            <div className="font-['Syne'] text-[40px] font-extrabold leading-none tracking-[-0.02em] text-foreground">
               {item.value}
             </div>
           </CardContent>

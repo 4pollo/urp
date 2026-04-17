@@ -1,4 +1,6 @@
+import { Badge } from '../ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Separator } from '../ui/separator';
 
 export function UserSummaryCard({
   email,
@@ -11,24 +13,24 @@ export function UserSummaryCard({
 }) {
   return (
     <Card>
-      <CardHeader className="border-b border-[var(--border)]">
-        <CardTitle>账户信息</CardTitle>
+      <CardHeader className="border-b border-border">
+        <div className="flex items-center justify-between gap-3">
+          <CardTitle>账户信息</CardTitle>
+          <Badge variant={status === 'active' ? 'secondary' : 'destructive'}>
+            {status === 'active' ? '正常' : '冻结'}
+          </Badge>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-0 text-xs text-[var(--foreground)]">
-        <div className="flex items-center justify-between border-b border-[var(--border)] py-4">
-          <div className="text-[11px] uppercase tracking-[0.05em] text-[var(--foreground-tertiary)]">
+      <CardContent className="space-y-4 text-sm text-foreground">
+        <div className="space-y-1">
+          <div className="text-[11px] uppercase tracking-[0.05em] text-muted-foreground">
             邮箱
           </div>
           <div>{email}</div>
         </div>
-        <div className="flex items-center justify-between border-b border-[var(--border)] py-4">
-          <div className="text-[11px] uppercase tracking-[0.05em] text-[var(--foreground-tertiary)]">
-            状态
-          </div>
-          <div>{status === 'active' ? '正常' : '冻结'}</div>
-        </div>
-        <div className="flex items-center justify-between py-4">
-          <div className="text-[11px] uppercase tracking-[0.05em] text-[var(--foreground-tertiary)]">
+        <Separator />
+        <div className="space-y-1">
+          <div className="text-[11px] uppercase tracking-[0.05em] text-muted-foreground">
             最后登录
           </div>
           <div>

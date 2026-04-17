@@ -1,4 +1,12 @@
 import type { ReactNode } from 'react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '../ui/card';
+import { Badge } from '../ui/badge';
 
 const features = [
   '基于角色的访问控制 (RBAC)',
@@ -20,43 +28,45 @@ export function AuthShell({
   children: ReactNode;
 }) {
   return (
-    <main className="grid min-h-screen bg-[var(--background-secondary)] lg:grid-cols-[1.2fr_0.8fr]">
-      <section className="auth-dark-panel hidden border-r border-[#333333] px-16 py-16 lg:flex lg:flex-col lg:justify-center">
-        <div className="relative z-10 max-w-xl">
-          <div className="mb-16">
+    <main className="grid min-h-screen bg-muted/40 lg:grid-cols-[1.15fr_0.85fr]">
+      <section className="auth-dark-panel hidden border-r border-border px-10 py-12 lg:flex lg:items-center lg:px-16 lg:py-16">
+        <div className="relative z-10 max-w-xl space-y-8">
+          <div className="space-y-4">
+            <Badge variant="outline" className="border-white/15 text-white/70">
+              权限管理系统
+            </Badge>
             <div className="font-['Syne'] text-[72px] font-extrabold uppercase leading-[0.9] tracking-[-0.04em] text-white">
               URP
             </div>
-            <div className="mt-4 text-sm uppercase tracking-[0.1em] text-[#737373]">
-              权限管理系统
-            </div>
-            <p className="mt-8 max-w-md text-[13px] leading-8 text-[#a3a3a3]">
+            <p className="max-w-md text-sm leading-7 text-white/70">
               {brandDescription}
             </p>
           </div>
 
-          <div className="space-y-4 text-xs text-[#a3a3a3]">
+          <div className="grid gap-3 sm:grid-cols-2">
             {features.map((feature) => (
-              <div key={feature} className="flex items-center gap-3">
-                <span className="text-[#737373]">—</span>
-                <span>{feature}</span>
+              <div
+                key={feature}
+                className="border border-white/10 bg-white/5 px-4 py-3 text-xs text-white/85"
+              >
+                {feature}
               </div>
             ))}
           </div>
         </div>
       </section>
-      <section className="flex items-center justify-center bg-[var(--background-secondary)] px-6 py-10 sm:px-8 lg:px-16 lg:py-16">
-        <div className="auth-form-card">
-          <div className="mb-12">
-            <h1 className="page-title text-[40px] text-[var(--auth-form-foreground)]">
+      <section className="flex items-center justify-center px-6 py-10 sm:px-8 lg:px-16 lg:py-16">
+        <Card className="w-full max-w-[440px]">
+          <CardHeader className="space-y-3 p-10 pb-0">
+            <CardTitle className="page-title text-[40px] text-foreground">
               {title}
-            </h1>
-            <p className="mt-2 text-xs uppercase tracking-[0.05em] text-[var(--auth-form-muted)]">
+            </CardTitle>
+            <CardDescription className="text-xs uppercase tracking-[0.05em] text-muted-foreground">
               {subtitle}
-            </p>
-          </div>
-          {children}
-        </div>
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-10 pt-8">{children}</CardContent>
+        </Card>
       </section>
     </main>
   );

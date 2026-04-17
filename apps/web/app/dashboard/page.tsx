@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { ShieldCheck } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlertMessage } from '../../components/common/alert-message';
@@ -12,6 +12,7 @@ import { PermissionListCard } from '../../components/dashboard/permission-list-c
 import { RoleListCard } from '../../components/dashboard/role-list-card';
 import { UserSummaryCard } from '../../components/dashboard/user-summary-card';
 import { AppShell } from '../../components/layout/app-shell';
+import { Badge } from '../../components/ui/badge';
 import { useCurrentUser } from '../../hooks/use-current-user';
 import { useMyPermissions } from '../../hooks/use-my-permissions';
 import { isSuperAdmin } from '../../lib/guards';
@@ -62,19 +63,19 @@ export default function DashboardPage() {
 
   return (
     <AppShell showAdmin={showAdmin}>
-      <div className="mb-12">
-        <h1 className="page-title">用户面板</h1>
-        <p className="mt-2 text-xs uppercase tracking-[0.05em] text-[var(--foreground-tertiary)]">
-          查看您的账户信息和权限
-        </p>
-        {showAdmin ? (
-          <Link
-            className="mt-4 inline-block text-[11px] uppercase tracking-[0.08em] text-[var(--foreground-tertiary)] hover:text-white"
-            href="/admin"
-          >
-            管理面板
-          </Link>
-        ) : null}
+      <div className="mb-12 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <h1 className="page-title">用户面板</h1>
+          <p className="mt-2 text-xs uppercase tracking-[0.05em] text-muted-foreground">
+            查看您的账户信息和权限
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Badge variant="outline" className="gap-1.5 px-3 py-2">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            {permissions.length} 项权限
+          </Badge>
+        </div>
       </div>
 
       {error ? (

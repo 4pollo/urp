@@ -1,13 +1,16 @@
 'use client';
 
-import { Button } from '../ui/button';
+import { AlertTriangle } from 'lucide-react';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '../ui/dialog';
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../ui/alert-dialog';
 
 export function ConfirmDialog({
   open,
@@ -27,7 +30,7 @@ export function ConfirmDialog({
   onConfirm: () => void;
 }) {
   return (
-    <Dialog
+    <AlertDialog
       open={open}
       onOpenChange={(nextOpen) => {
         if (!pending) {
@@ -35,24 +38,31 @@ export function ConfirmDialog({
         }
       }}
     >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
-        </DialogHeader>
-        <div className="mt-6 flex justify-end gap-3">
-          <Button
-            variant="outline"
+      <AlertDialogContent className="sm:max-w-md">
+        <AlertDialogHeader>
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 flex h-10 w-10 items-center justify-center border border-destructive/40 bg-destructive/10 text-destructive">
+              <AlertTriangle className="h-4 w-4" />
+            </div>
+            <div className="space-y-1">
+              <AlertDialogTitle>{title}</AlertDialogTitle>
+              <AlertDialogDescription>{description}</AlertDialogDescription>
+            </div>
+          </div>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={pending}>取消</AlertDialogCancel>
+          <AlertDialogAction
             disabled={pending}
-            onClick={() => onOpenChange(false)}
+            onClick={(event) => {
+              event.preventDefault();
+              onConfirm();
+            }}
           >
-            取消
-          </Button>
-          <Button variant="danger" disabled={pending} onClick={onConfirm}>
             {pending ? '处理中...' : confirmLabel}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
