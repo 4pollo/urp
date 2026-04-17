@@ -23,6 +23,8 @@
 
 ## 环境变量
 
+当前 API 环境变量文件位于 `apps/api/.env`，示例文件位于 `apps/api/.env.example`。
+
 当前实现使用以下环境变量：
 
 ```env
@@ -38,7 +40,8 @@ CORS_ORIGIN=http://localhost:3000
 PORT=3000
 ```
 
-其中 `PORT` 为可选项，默认 `3000`。
+其中 `PORT` 为可选项，当前 monorepo 下 API 默认建议使用 `3001`，前端默认使用 `3000`。
+前端若后续需要环境变量，建议放在 `apps/web/.env.local`。
 
 ## 快速开始
 
@@ -50,7 +53,7 @@ npm install
 
 ### 2. 配置环境变量
 
-复制 `.env.example` 为 `.env` 并填写配置。
+复制 `apps/api/.env.example` 为 `apps/api/.env` 并填写配置。
 
 ### 3. 准备数据库
 
@@ -75,15 +78,25 @@ npm run seed
 ### 5. 启动服务
 
 ```bash
-# 开发模式
-npm run start:dev
+# 启动 API（NestJS）
+npm run dev:api
 
-# 生产模式
+# 启动 Web（Next.js）
+npm run dev:web
+
+# 同时启动前后端
+npm run dev
+
+# 构建
+npm run build:api
+npm run build:web
+# 或
 npm run build
-npm run start:prod
 ```
 
-服务默认运行在 `http://localhost:3000`，也可通过 `PORT` 调整。
+默认开发端口：
+- Web：`http://localhost:3000`
+- API：`http://localhost:3001`
 
 ## API 概览
 
@@ -169,7 +182,7 @@ URP 当前定位为 **RBAC 权限系统底模**，适合在客户项目中继续
 
 边界说明：
 - 当前已具备完整的 JWT + RBAC 主链路，可直接复用认证、角色授权、权限聚合和管理接口
-- `public/demo/` 仅用于接口联调与能力演示，不应视为生产级前端
+- `apps/web/` 现已提供正式前端入口；`apps/api/public/demo/` 仅保留为 legacy 联调参考，不应视为生产级前端
 - 底模阶段可优先保留当前开发效率优先的配置；正式交付项目再按需要收口 migration、监控、审计、多租户等能力
 
 ## 派生项目开发者阅读路径
@@ -180,7 +193,7 @@ URP 当前定位为 **RBAC 权限系统底模**，适合在客户项目中继续
 2. **[docs/API.md](docs/API.md)**：查看接口、典型接入流程、权限扩展与角色授权方式
 3. **[docs/DEMO.md](docs/DEMO.md)**：参考前端如何登录、存 token、获取用户与权限
 4. **[docs/PRD.md](docs/PRD.md)**：理解底模边界、常见定制维度与演进方向
-5. **代码实现**：以 `src/auth/*`、`src/users/*`、`src/roles/*`、`src/permissions/*`、`src/seed.ts` 为最终 source of truth
+5. **代码实现**：以后端 `apps/api/src/auth/*`、`apps/api/src/users/*`、`apps/api/src/roles/*`、`apps/api/src/permissions/*`、`apps/api/src/seed.ts` 与前端 `apps/web/*` 为最终 source of truth
 
 ## 常见派生场景与改造入口
 
@@ -201,13 +214,22 @@ URP 当前定位为 **RBAC 权限系统底模**，适合在客户项目中继续
 - 控制器或方法级使用 `@RequireRoles(...)` / `@RequirePermissions(...)`
 
 ### 4. 前端接入
-- 可参考 `public/demo/shared.js`、`dashboard.html`、`admin.html`
-- 推荐复用其登录、携带 token、获取当前用户与权限的流程
-- 不建议直接把 demo 页面作为客户项目管理台交付
+- 当前正式前端位于 `apps/web/`，已提供 `/login`、`/register`、`/dashboard`、`/admin` 四条主链路
+- 若派生项目继续演进，建议在 `apps/web/lib/*`、`apps/web/hooks/*`、`apps/web/components/*` 基础上扩展
+- `apps/api/public/demo/*` 仍可作为最小联调参考，但不建议直接作为客户项目管理台交付
 
-## Demo 页面
+## 前端入口
 
-启动服务后可访问：
+当前正式前端入口：
+
+| 页面 | 地址 |
+|------|------|
+| 登录 | `/login` |
+| 注册 | `/register` |
+| 用户面板 | `/dashboard` |
+| 管理面板 | `/admin` |
+
+legacy demo 仍保留以下地址用于联调参考：
 
 | 页面 | 地址 |
 |------|------|
@@ -217,10 +239,9 @@ URP 当前定位为 **RBAC 权限系统底模**，适合在客户项目中继续
 | 管理面板 | `/demo/admin.html` |
 
 说明：
-- Demo 页面由 Nest 静态托管，资源目录为 `public/`
-- Demo 页面当前通过相对 `/api/...` 路径请求后端，可随服务端口一同工作
-- 管理面板页面本身是静态资源，页面加载后仍通过接口判断当前用户是否为 `SuperAdmin`
-- 这些页面的定位是“联调样例 + 集成参考”，而不是生产前端
+- 正式前端位于 `apps/web/`
+- legacy demo 由 API 静态托管，资源目录为 `apps/api/public/demo/`
+- demo 的定位是“联调样例 + 集成参考”，而不是生产前端
 
 详见 [docs/DEMO.md](docs/DEMO.md)
 
@@ -228,42 +249,48 @@ URP 当前定位为 **RBAC 权限系统底模**，适合在客户项目中继续
 
 ```bash
 npm install
-npm run start:dev
+npm run dev:api
+npm run dev:web
+npm run dev
+npm run build:api
+npm run build:web
 npm run build
-npm run start:prod
-npm run format
 npm run lint
 npm run test
 npm run test:e2e
-npm run test:cov
 npm run seed
 ```
 
 ## 项目结构
 
 ```text
-src/
-├── auth/                # 认证模块、JWT Guard/Strategy、DTO
-├── users/               # 用户模块、实体、DTO
-├── roles/               # 角色模块、实体、DTO
-├── permissions/         # 权限模块、实体、DTO
-├── common/
-│   ├── filters/         # 全局异常过滤器
-│   └── interceptors/    # 全局响应拦截器
-├── seed.ts              # 种子数据脚本
-├── app.module.ts        # 根模块
-├── app.controller.ts    # 根控制器
-├── app.service.ts       # 根服务
-└── main.ts              # 应用入口
-public/
-└── demo/                # 静态 Demo 页面
+apps/
+├── api/
+│   ├── src/
+│   │   ├── auth/                # 认证模块、JWT Guard/Strategy、DTO
+│   │   ├── users/               # 用户模块、实体、DTO
+│   │   ├── roles/               # 角色模块、实体、DTO
+│   │   ├── permissions/         # 权限模块、实体、DTO
+│   │   ├── common/
+│   │   │   ├── filters/         # 全局异常过滤器
+│   │   │   └── interceptors/    # 全局响应拦截器
+│   │   ├── seed.ts              # 种子数据脚本
+│   │   └── main.ts              # API 入口
+│   └── public/
+│       └── demo/                # legacy 静态 Demo 页面
+└── web/
+    ├── app/                     # Next.js App Router 页面
+    ├── components/              # 前端组件
+    ├── hooks/                   # 前端 hooks
+    └── lib/                     # 请求、会话、鉴权基础层
 ```
 
 ## 当前实现说明
 
+- 当前仓库已升级为 monorepo：`apps/api` 承载 NestJS API，`apps/web` 承载 Next.js 前端
 - 当前 users / roles / permissions 管理接口都要求 JWT
 - 当前项目已具备基于角色和权限点的路由级访问控制能力：`AccessGuard` 可配合 `@RequireRoles(...)` 与 `@RequirePermissions(...)` 使用
-- 当前控制器示例主要以 `SuperAdmin` 角色控制为主；派生项目中可按业务模块进一步使用权限点保护
+- 当前前端已提供 `/login`、`/register`、`/dashboard`、`/admin` 四条正式页面链路
 - Refresh Token 已具备生命周期控制与单会话轮换策略，修改密码后旧 refresh token 会失效
 
 ## 许可证

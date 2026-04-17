@@ -1,0 +1,56 @@
+export type ApiResponse<T> = {
+  code: number;
+  message: string;
+  data: T;
+};
+
+export type AuthUser = {
+  id: number;
+  email: string;
+  status: string;
+  lastLoginAt?: string | null;
+  roles?: Array<{ id: number; name: string; description?: string }>;
+};
+
+export type AuthPayload = {
+  accessToken: string;
+  refreshToken: string;
+  user: AuthUser;
+};
+
+export type MyPermissions = {
+  roles: string[];
+  permissions: string[];
+};
+
+export type UserListItem = {
+  id: number;
+  email: string;
+  status: string;
+  lastLoginAt: string | null;
+  createdAt: string;
+  roles: Array<{ id: number; name: string }>;
+};
+
+export type UserListResponse = {
+  items: UserListItem[];
+  total: number;
+  page: number;
+  limit: number;
+};
+
+export type RoleListItem = {
+  id: number;
+  name: string;
+  description: string;
+  permissionCount: number;
+  createdAt: string;
+};
+
+export type PermissionItem = {
+  id: number;
+  key: string;
+  group: string;
+  description: string;
+  createdAt?: string;
+};

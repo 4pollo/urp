@@ -2,17 +2,25 @@
 
 ## 访问地址
 
-启动服务器后，可以通过以下地址访问示例页面：
+当前仓库已经有正式前端入口，legacy demo 仅作为参考：
 
+### 正式前端（Next.js）
+- **登录页面**: `/login`
+- **注册页面**: `/register`
+- **用户面板**: `/dashboard`
+- **管理面板**: `/admin`
+
+### Legacy Demo（静态参考页）
 - **登录页面**: `/demo/login.html`
 - **注册页面**: `/demo/register.html`
 - **用户面板**: `/demo/dashboard.html`
 - **管理面板**: `/demo/admin.html`
 
 说明：
-- 应用默认监听 `http://localhost:3000`
-- 若设置了 `PORT`，则以上页面会随服务端口一起变化
-- 静态资源由 Nest 从项目根目录 `public/` 提供
+- Web 默认开发端口为 `http://localhost:3000`
+- API 默认开发端口为 `http://localhost:3001`
+- API 环境变量文件位于 `apps/api/.env`
+- legacy demo 静态资源由 Nest 从 `apps/api/public/` 提供
 
 ## 默认账户
 
@@ -58,6 +66,13 @@
 
 ## 技术实现
 
+### 正式前端
+- 基于 Next.js App Router
+- 前端位于 `apps/web/`
+- 当前已接入统一请求层、session 存储、认证辅助与管理台页面骨架
+- 当前继续沿用 `localStorage` 保存 access / refresh token，后续可再升级更稳妥的 token 策略
+
+### Legacy Demo
 - 静态页面以 HTML + CSS + JavaScript 编写
 - 使用 Tailwind CDN
 - 使用 Google Fonts（Syne + IBM Plex Mono）
@@ -66,12 +81,12 @@
 
 ## Demo 在底模中的作用
 
-这些页面的定位是：
-- 演示 URP API 的调用方式
-- 快速测试登录、注册与权限管理主链路
-- 作为派生项目前端接入时的最小参考实现
+这些页面当前的定位是：
+- 正式前端由 `apps/web/` 承担主入口
+- legacy demo 继续用于演示 URP API 的调用方式
+- legacy demo 作为派生项目前端接入时的最小参考实现
 
-这些页面**不是**生产级前端，也不建议直接作为客户项目管理台交付。
+因此 `/demo/*.html` **不是**主前端入口，也不建议直接作为客户项目管理台交付。
 
 ## 前端最小接入流程
 
@@ -86,11 +101,12 @@
 7. 认证失效时统一跳回登录页并清理本地状态
 
 对应参考文件：
-- `public/demo/shared.js`
-- `public/demo/login.html`
-- `public/demo/register.html`
-- `public/demo/dashboard.html`
-- `public/demo/admin.html`
+- 正式前端：`apps/web/app/*`、`apps/web/components/*`、`apps/web/lib/*`
+- legacy demo：`apps/api/public/demo/shared.js`
+- legacy demo：`apps/api/public/demo/login.html`
+- legacy demo：`apps/api/public/demo/register.html`
+- legacy demo：`apps/api/public/demo/dashboard.html`
+- legacy demo：`apps/api/public/demo/admin.html`
 
 ## 派生项目替换点
 

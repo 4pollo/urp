@@ -5,10 +5,15 @@ node_modules/
 .env
 .env.local
 .env.*.local
+apps/*/.env
+apps/*/.env.local
+apps/*/.env.*.local
 
 # Build output
 dist/
 build/
+apps/*/dist/
+apps/*/.next/
 
 # Prisma
 /generated/prisma
